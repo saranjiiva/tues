@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedCO Assess — Live Exam</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#020617;
+      --panel:#0f172a;
+      --card:#111827;
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --primary:#2563eb;
+      --primary2:#1d4ed8;
+      --success:#22c55e;
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --border:rgba(255,255,255,0.08);
+      --shadow:0 20px 40px rgba(0,0,0,0.35);
+    }
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Inter',sans-serif;
+    }
+
+    body{
+      min-height:100vh;
+      background:
+        radial-gradient(circle at top right, rgba(37,99,235,0.14), transparent 35%),
+        radial-gradient(circle at bottom left, rgba(29,78,216,0.12), transparent 35%),
+        var(--bg);
+      color:var(--text);
+      padding:20px;
+    }
+
+    .container{
+      max-width:1100px;
+      margin:auto;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:15px;
+      margin-bottom:25px;
+    }
+
+    .exam-title h1{
+      font-size:32px;
+      font-weight:800;
+    }
+
+    .exam-title p{
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    .timer-box{
+      padding:18px 24px;
+      border-radius:20px;
+      background:rgba(239,68,68,0.12);
+      border:1px solid rgba(239,68,68,0.25);
+      text-align:center;
+      min-width:150px;
+    }
+
+    .timer-box h2{
+      font-size:34px;
+      font-weight:800;
+      color:#fecaca;
+    }
+
+    .timer-box p{
+      font-size:13px;
+      color:#fecaca;
+    }
+
+    .progress-card{
+      background:rgba(255,255,255,0.03);
+      border:1px solid var(--border);
+      padding:18px;
+      border-radius:20px;
+      margin-bottom:25px;
+    }
+
+    .progress-head{
+      display:flex;
+      justify-content:space-between;
+      margin-bottom:12px;
+      font-size:14px;
+      color:var(--muted);
+    }
+
+    .progress-bar{
+      height:12px;
+      background:rgba(255,255,255,0.06);
+      border-radius:999px;
+      overflow:hidden;
+    }
+
+    .progress-fill{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg,var(--primary),#60a5fa);
+      transition:0.3s;
+    }
+
+    .question-card{
+      background:rgba(255,255,255,0.03);
+      border:1px solid var(--border);
+      border-radius:28px;
+      padding:35px;
+      box-shadow:var(--shadow);
+    }
+
+    .co-badge{
+      display:inline-block;
+      padding:8px 14px;
+      border-radius:999px;
+      background:rgba(37,99,235,0.12);
+      color:#bfdbfe;
+      font-size:13px;
+      font-weight:700;
+      margin-bottom:18px;
+    }
+
+    .question-text{
+      font-size:24px;
+      font-weight:700;
+      line-height:1.6;
+      margin-bottom:28px;
+    }
+
+    .options{
+      display:grid;
+      gap:16px;
+    }
+
+    .option{
+      padding:18px 20px;
+      border-radius:18px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.02);
+      cursor:pointer;
+      transition:0.25s;
+      font-size:16px;
+      font-weight:500;
+    }
+
+    .option:hover{
+      border-color:rgba(96,165,250,0.4);
+      background:rgba(37,99,235,0.08);
+    }
+
+    .option.selected{
+      border-color:#60a5fa;
+      background:rgba(37,99,235,0.18);
+    }
+
+    .controls{
+      display:flex;
+      justify-content:space-between;
+      margin-top:30px;
+      flex-wrap:wrap;
+      gap:15px;
+    }
+
+    .btn{
+      padding:15px 24px;
+      border:none;
+      border-radius:16px;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .btn-next{
+      background:linear-gradient(135deg,var(--primary),var(--primary2));
+      color:white;
+    }
+
+    .btn-submit{
+      background:rgba(34,197,94,0.15);
+      color:#bbf7d0;
+    }
+
+    .btn:disabled{
+      opacity:0.5;
+      cursor:not-allowed;
+    }
+
+    @media(max-width:700px){
+      .question-text{
+        font-size:20px;
+      }
+
+      .question-card{
+        padding:22px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="exam-title">
+      <h1>Live MCQ Examination</h1>
+      <p id="studentInfo">Student</p>
+    </div>
+
+    <div class="timer-box">
+      <h2 id="timer">30</h2>
+      <p>Seconds Left</p>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-card">
+    <div class="progress-head">
+      <span id="questionTracker">Question 1 / 50</span>
+      <span id="progressPercent">2%</span>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="question-card">
+
+    <div class="co-badge" id="coBadge">CO 1.1</div>
+
+    <div class="question-text" id="questionText">
+      Loading question...
+    </div>
+
+    <div class="options" id="optionsContainer">
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-submit" onclick="submitExam()">
+        Submit Exam
+      </button>
+
+      <button class="btn btn-next" id="nextBtn" onclick="nextQuestion()" disabled>
+        Save & Next
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    updateDoc,
+    collection,
+    getDocs
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const studentName = localStorage.getItem("studentName");
+  const rollNumber = localStorage.getItem("rollNumber");
+
+  if(!studentName || !rollNumber){
+    window.location.href = "index.html";
+  }
+
+  document.getElementById("studentInfo").textContent = `${studentName} | Roll No: ${rollNumber}`;
+
+  let allQuestions = [];
+  let currentQuestionIndex = 0;
+  let selectedOption = null;
+  let timer;
+  let timeLeft = parseInt(localStorage.getItem("questionTimer")) || 30;
+  let studentAnswers = [];
+
+  async function loadQuestions(){
+    try{
+      const querySnapshot = await getDocs(collection(db,"questionBank"));
+
+      querySnapshot.forEach((docSnap)=>{
+        allQuestions.push({
+          id: docSnap.id,
+          ...docSnap.data()
+        });
+      });
+
+      // Shuffle questions uniquely per student
+      allQuestions = shuffleArray(allQuestions).slice(0,50);
+
+      loadQuestion();
+
+    }catch(error){
+      console.error(error);
+      alert("Failed to load questions.");
+    }
+  }
+
+  function shuffleArray(array){
+    let seed = rollNumber.split("").reduce((a,b)=>a+b.charCodeAt(0),0);
+    for(let i=array.length-1;i>0;i--){
+      seed = (seed * 9301 + 49297) % 233280;
+      const j = Math.floor((seed/233280) * (i+1));
+      [array[i],array[j]] = [array[j],array[i]];
+    }
+    return array;
+  }
+
+  function loadQuestion(){
+    if(currentQuestionIndex >= allQuestions.length){
+      submitExam();
+      return;
+    }
+
+    selectedOption = null;
+    document.getElementById("nextBtn").disabled = true;
+
+    const q = allQuestions[currentQuestionIndex];
+
+    document.getElementById("questionText").textContent = q.question;
+    document.getElementById("coBadge").textContent = q.courseOutcome || "CO";
+    document.getElementById("questionTracker").textContent =
+      `Question ${currentQuestionIndex+1} / ${allQuestions.length}`;
+
+    const progress = Math.round(((currentQuestionIndex+1)/allQuestions.length)*100);
+    document.getElementById("progressPercent").textContent = `${progress}%`;
+    document.getElementById("progressFill").style.width = `${progress}%`;
+
+    const optionsContainer = document.getElementById("optionsContainer");
+    optionsContainer.innerHTML = "";
+
+    q.options.forEach((option,index)=>{
+      const div = document.createElement("div");
+      div.className = "option";
+      div.textContent = option;
+      div.onclick = ()=>{
+        document.querySelectorAll(".option").forEach(opt=>opt.classList.remove("selected"));
+        div.classList.add("selected");
+        selectedOption = index;
+        document.getElementById("nextBtn").disabled = false;
+      };
+      optionsContainer.appendChild(div);
+    });
+
+    resetTimer();
+  }
+
+  function resetTimer(){
+    clearInterval(timer);
+    timeLeft = parseInt(localStorage.getItem("questionTimer")) || 30;
+    document.getElementById("timer").textContent = timeLeft;
+
+    timer = setInterval(()=>{
+      timeLeft--;
+      document.getElementById("timer").textContent = timeLeft;
+
+      if(timeLeft <= 0){
+        clearInterval(timer);
+        saveAnswerAndMove();
+      }
+
+    },1000);
+  }
+
+  async function saveAnswerAndMove(){
+    const q = allQuestions[currentQuestionIndex];
+
+    studentAnswers.push({
+      questionId:q.id,
+      question:q.question,
+      selectedAnswer:selectedOption,
+      correctAnswer:q.correctAnswer,
+      explanation:q.explanation,
+      courseOutcome:q.courseOutcome,
+      marks:selectedOption === q.correctAnswer ? 1 : 0
+    });
+
+    currentQuestionIndex++;
+
+    // Update live progress
+    await updateDoc(doc(db,"students",rollNumber),{
+      currentQuestion:currentQuestionIndex
+    });
+
+    loadQuestion();
+  }
+
+  window.nextQuestion = function(){
+    saveAnswerAndMove();
+  }
+
+  window.submitExam = async function(){
+    clearInterval(timer);
+
+    let totalScore = studentAnswers.reduce((sum,a)=>sum+a.marks,0);
+
+    await setDoc(doc(db,"results",rollNumber),{
+      studentName,
+      rollNumber,
+      answers:studentAnswers,
+      totalScore,
+      totalQuestions:allQuestions.length,
+      submittedAt:new Date().toISOString()
+    });
+
+    await updateDoc(doc(db,"students",rollNumber),{
+      status:"completed",
+      score:totalScore
+    });
+
+    window.location.href = "results.html";
+  }
+
+  loadQuestions();
+
+</script>
+
+</body>
+</html>
