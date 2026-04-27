@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedCO Assess — Waiting Room</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#020617;
+      --panel:#0f172a;
+      --card:#111827;
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --primary:#2563eb;
+      --primary2:#1d4ed8;
+      --success:#22c55e;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --border:rgba(255,255,255,0.08);
+      --shadow:0 25px 50px rgba(0,0,0,0.35);
+    }
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Inter',sans-serif;
+    }
+
+    body{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:
+        radial-gradient(circle at top right, rgba(37,99,235,0.15), transparent 35%),
+        radial-gradient(circle at bottom left, rgba(29,78,216,0.12), transparent 35%),
+        var(--bg);
+      color:var(--text);
+    }
+
+    .container{
+      width:100%;
+      max-width:900px;
+      background:rgba(255,255,255,0.03);
+      border:1px solid var(--border);
+      border-radius:32px;
+      padding:50px;
+      box-shadow:var(--shadow);
+      text-align:center;
+      backdrop-filter:blur(16px);
+    }
+
+    .logo{
+      width:90px;
+      height:90px;
+      margin:0 auto 24px;
+      border-radius:24px;
+      background:linear-gradient(135deg,var(--primary),var(--primary2));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:34px;
+      font-weight:800;
+      box-shadow:0 15px 35px rgba(37,99,235,0.35);
+      animation:pulse 2s infinite;
+    }
+
+    @keyframes pulse{
+      0%{transform:scale(1);}
+      50%{transform:scale(1.05);}
+      100%{transform:scale(1);}
+    }
+
+    h1{
+      font-size:40px;
+      font-weight:800;
+      margin-bottom:14px;
+    }
+
+    .subtitle{
+      font-size:17px;
+      color:var(--muted);
+      line-height:1.8;
+      max-width:650px;
+      margin:0 auto 35px;
+    }
+
+    .student-box{
+      display:inline-block;
+      padding:18px 28px;
+      border-radius:18px;
+      background:rgba(255,255,255,0.04);
+      border:1px solid var(--border);
+      margin-bottom:35px;
+    }
+
+    .student-box strong{
+      font-size:18px;
+    }
+
+    .student-box p{
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    .status-card{
+      margin:25px auto;
+      max-width:500px;
+      padding:22px;
+      border-radius:22px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.03);
+    }
+
+    .status-label{
+      font-size:14px;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+
+    .status-live{
+      color:var(--success);
+      font-size:24px;
+      font-weight:800;
+    }
+
+    .status-wait{
+      color:var(--warning);
+      font-size:24px;
+      font-weight:800;
+    }
+
+    .status-ended{
+      color:var(--danger);
+      font-size:24px;
+      font-weight:800;
+    }
+
+    .loader{
+      margin:30px auto;
+      width:70px;
+      height:70px;
+      border:6px solid rgba(255,255,255,0.08);
+      border-top:6px solid #60a5fa;
+      border-radius:50%;
+      animation:spin 1s linear infinite;
+    }
+
+    @keyframes spin{
+      to{transform:rotate(360deg);}
+    }
+
+    .info-grid{
+      margin-top:35px;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:18px;
+    }
+
+    .info-card{
+      padding:18px;
+      border-radius:18px;
+      background:rgba(255,255,255,0.03);
+      border:1px solid var(--border);
+    }
+
+    .info-card h3{
+      font-size:15px;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+
+    .info-card p{
+      font-size:20px;
+      font-weight:800;
+    }
+
+    .footer{
+      margin-top:35px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.7;
+    }
+
+    .logout-btn{
+      margin-top:28px;
+      padding:14px 24px;
+      border:none;
+      border-radius:16px;
+      background:rgba(239,68,68,0.12);
+      color:#fecaca;
+      cursor:pointer;
+      font-weight:700;
+      font-size:15px;
+    }
+
+    @media(max-width:700px){
+      .container{
+        padding:30px 20px;
+      }
+
+      h1{
+        font-size:30px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="logo">MCQ</div>
+
+  <h1>Waiting Room</h1>
+
+  <p class="subtitle">
+    You have successfully joined the session. Please wait until your faculty host dispatches the exam.
+    Once activated, your test will automatically begin.
+  </p>
+
+  <div class="student-box">
+    <strong id="studentNameDisplay">Student Name</strong>
+    <p id="studentRollDisplay">Roll Number</p>
+  </div>
+
+  <div class="status-card">
+    <div class="status-label">Current Session Status</div>
+    <div id="sessionStatus" class="status-wait">Waiting for Host Dispatch</div>
+  </div>
+
+  <div class="loader" id="loader"></div>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <h3>Total Questions</h3>
+      <p id="questionCount">50</p>
+    </div>
+
+    <div class="info-card">
+      <h3>Per Question Timer</h3>
+      <p id="timerDisplay">--</p>
+    </div>
+
+    <div class="info-card">
+      <h3>Question Order</h3>
+      <p>Randomized</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    Do not refresh or close this page during active examination.<br>
+    Session will auto-launch when host starts the exam.
+  </div>
+
+  <button class="logout-btn" onclick="logoutStudent()">
+    Logout
+  </button>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    onSnapshot
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const studentName = localStorage.getItem("studentName");
+  const rollNumber = localStorage.getItem("rollNumber");
+
+  if(!studentName || !rollNumber){
+    window.location.href = "index.html";
+  }
+
+  document.getElementById("studentNameDisplay").textContent = studentName;
+  document.getElementById("studentRollDisplay").textContent = `Roll No: ${rollNumber}`;
+
+  const sessionStatusEl = document.getElementById("sessionStatus");
+  const timerDisplay = document.getElementById("timerDisplay");
+  const loader = document.getElementById("loader");
+
+  async function monitorSession(){
+    try{
+      // Watch global active session
+      const sessionRef = doc(db,"system","activeSession");
+
+      onSnapshot(sessionRef,(sessionSnap)=>{
+        if(sessionSnap.exists()){
+          const sessionData = sessionSnap.data();
+
+          const sessionStatus = sessionData.status || "waiting";
+          const questionTimer = sessionData.questionTimer || "--";
+
+          timerDisplay.textContent = questionTimer === "--" ? "--" : `${questionTimer}s`;
+
+          if(sessionStatus === "waiting"){
+            sessionStatusEl.textContent = "Waiting for Host Dispatch";
+            sessionStatusEl.className = "status-wait";
+            loader.style.display = "block";
+          }
+
+          else if(sessionStatus === "live"){
+            sessionStatusEl.textContent = "Exam Live — Launching Now";
+            sessionStatusEl.className = "status-live";
+            loader.style.display = "none";
+
+            // Save session details locally
+            localStorage.setItem("sessionId", sessionData.sessionId || "");
+            localStorage.setItem("questionTimer", questionTimer);
+
+            // Redirect to exam page
+            setTimeout(()=>{
+              window.location.href = "exam.html";
+            },1500);
+          }
+
+          else if(sessionStatus === "ended"){
+            sessionStatusEl.textContent = "Session Ended";
+            sessionStatusEl.className = "status-ended";
+            loader.style.display = "none";
+
+            setTimeout(()=>{
+              window.location.href = "results.html";
+            },2000);
+          }
+
+        }else{
+          sessionStatusEl.textContent = "No Active Session";
+          sessionStatusEl.className = "status-ended";
+          loader.style.display = "none";
+        }
+      });
+
+    }catch(error){
+      console.error("Error monitoring session:", error);
+      sessionStatusEl.textContent = "Connection Error";
+      sessionStatusEl.className = "status-ended";
+    }
+  }
+
+  monitorSession();
+
+  window.logoutStudent = function(){
+    localStorage.clear();
+    window.location.href = "index.html";
+  };
+
+</script>
+
+</body>
+</html>
