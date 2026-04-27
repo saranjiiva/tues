@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedCO Assess — Results & Course Outcome Analytics</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#020617;
+      --panel:#0f172a;
+      --card:#111827;
+      --border:rgba(255,255,255,0.08);
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --primary:#2563eb;
+      --primary2:#1d4ed8;
+      --success:#22c55e;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --shadow:0 20px 40px rgba(0,0,0,0.35);
+    }
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Inter',sans-serif;
+    }
+
+    body{
+      background:
+        radial-gradient(circle at top right, rgba(37,99,235,0.14), transparent 35%),
+        radial-gradient(circle at bottom left, rgba(29,78,216,0.12), transparent 35%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      padding:24px;
+    }
+
+    .container{
+      max-width:1400px;
+      margin:auto;
+    }
+
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:20px;
+      margin-bottom:30px;
+    }
+
+    .header h1{
+      font-size:38px;
+      font-weight:800;
+    }
+
+    .header p{
+      color:var(--muted);
+      margin-top:8px;
+    }
+
+    .logout-btn{
+      padding:14px 22px;
+      border:none;
+      border-radius:16px;
+      background:rgba(239,68,68,0.12);
+      color:#fecaca;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .summary-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:20px;
+      margin-bottom:35px;
+    }
+
+    .card{
+      background:rgba(255,255,255,0.03);
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:24px;
+      box-shadow:var(--shadow);
+    }
+
+    .card h3{
+      color:var(--muted);
+      font-size:15px;
+      margin-bottom:12px;
+    }
+
+    .big{
+      font-size:34px;
+      font-weight:800;
+    }
+
+    .sub{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .section{
+      margin-top:40px;
+    }
+
+    .section h2{
+      font-size:28px;
+      margin-bottom:20px;
+      font-weight:800;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      background:rgba(255,255,255,0.03);
+      border-radius:22px;
+      overflow:hidden;
+    }
+
+    th, td{
+      padding:16px;
+      text-align:left;
+      border-bottom:1px solid var(--border);
+      vertical-align:top;
+    }
+
+    th{
+      background:rgba(37,99,235,0.14);
+      color:#bfdbfe;
+      font-size:14px;
+    }
+
+    td{
+      font-size:14px;
+      line-height:1.6;
+    }
+
+    .correct{
+      color:#bbf7d0;
+      font-weight:700;
+    }
+
+    .wrong{
+      color:#fecaca;
+      font-weight:700;
+    }
+
+    .badge{
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .level3{background:rgba(34,197,94,0.12); color:#bbf7d0;}
+    .level2{background:rgba(59,130,246,0.12); color:#bfdbfe;}
+    .level1{background:rgba(245,158,11,0.12); color:#fde68a;}
+    .level0{background:rgba(239,68,68,0.12); color:#fecaca;}
+
+    .question-card{
+      background:rgba(255,255,255,0.03);
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:22px;
+      margin-bottom:18px;
+    }
+
+    .question-card h4{
+      font-size:18px;
+      margin-bottom:12px;
+      line-height:1.6;
+    }
+
+    .meta{
+      margin-bottom:12px;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .explanation{
+      margin-top:12px;
+      padding:14px;
+      border-radius:16px;
+      background:rgba(255,255,255,0.03);
+      color:#cbd5e1;
+    }
+
+    .empty{
+      color:var(--muted);
+      text-align:center;
+      padding:40px;
+    }
+
+    @media(max-width:900px){
+      .header h1{
+        font-size:30px;
+      }
+
+      table{
+        display:block;
+        overflow-x:auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <h1>Results Dashboard</h1>
+      <p id="studentInfo">Student Performance Summary</p>
+    </div>
+
+    <button class="logout-btn" onclick="logoutStudent()">
+      Logout
+    </button>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary-grid">
+
+    <div class="card">
+      <h3>Total Score</h3>
+      <div class="big" id="totalScore">0</div>
+      <div class="sub">Marks obtained</div>
+    </div>
+
+    <div class="card">
+      <h3>Total Percentage</h3>
+      <div class="big" id="percentage">0%</div>
+      <div class="sub">Overall performance</div>
+    </div>
+
+    <div class="card">
+      <h3>Correct Answers</h3>
+      <div class="big" id="correctCount">0</div>
+      <div class="sub">Questions answered correctly</div>
+    </div>
+
+    <div class="card">
+      <h3>Course Outcomes</h3>
+      <div class="big" id="coCount">0</div>
+      <div class="sub">Mapped CO categories</div>
+    </div>
+
+  </div>
+
+  <!-- CO ANALYTICS -->
+  <div class="section">
+    <h2>Course Outcome Attainment</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Course Outcome</th>
+          <th>Score</th>
+          <th>Total</th>
+          <th>Attainment %</th>
+          <th>Level</th>
+        </tr>
+      </thead>
+      <tbody id="coTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- DETAILED ANSWERS -->
+  <div class="section">
+    <h2>Question-wise Review</h2>
+    <div id="questionReviewContainer"></div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const studentName = localStorage.getItem("studentName");
+  const rollNumber = localStorage.getItem("rollNumber");
+
+  if(!studentName || !rollNumber){
+    window.location.href = "index.html";
+  }
+
+  document.getElementById("studentInfo").textContent =
+    `${studentName} | Roll No: ${rollNumber}`;
+
+  async function loadResults(){
+    try{
+      const resultRef = doc(db,"results",rollNumber);
+      const resultSnap = await getDoc(resultRef);
+
+      if(!resultSnap.exists()){
+        document.getElementById("questionReviewContainer").innerHTML =
+          `<div class="empty">No results available yet.</div>`;
+        return;
+      }
+
+      const resultData = resultSnap.data();
+      const answers = resultData.answers || [];
+      const totalScore = resultData.totalScore || 0;
+      const totalQuestions = resultData.totalQuestions || answers.length;
+
+      const percentage = ((totalScore / totalQuestions) * 100).toFixed(1);
+
+      document.getElementById("totalScore").textContent =
+        `${totalScore}/${totalQuestions}`;
+
+      document.getElementById("percentage").textContent =
+        `${percentage}%`;
+
+      document.getElementById("correctCount").textContent =
+        totalScore;
+
+      // CO CALCULATION
+      let coStats = {};
+
+      answers.forEach((ans)=>{
+        const co = ans.courseOutcome || "Unassigned";
+
+        if(!coStats[co]){
+          coStats[co] = {
+            scored:0,
+            total:0
+          };
+        }
+
+        coStats[co].total += 1;
+        coStats[co].scored += ans.marks;
+      });
+
+      const coKeys = Object.keys(coStats);
+      document.getElementById("coCount").textContent = coKeys.length;
+
+      const coTableBody = document.getElementById("coTableBody");
+      coTableBody.innerHTML = "";
+
+      coKeys.forEach((co)=>{
+        const data = coStats[co];
+        const attainment = ((data.scored / data.total) * 100).toFixed(1);
+
+        let level = "";
+        let levelClass = "";
+
+        if(attainment >= 70){
+          level = "Level 3";
+          levelClass = "level3";
+        }else if(attainment >= 60){
+          level = "Level 2";
+          levelClass = "level2";
+        }else if(attainment >= 50){
+          level = "Level 1";
+          levelClass = "level1";
+        }else{
+          level = "Level 0";
+          levelClass = "level0";
+        }
+
+        coTableBody.innerHTML += `
+          <tr>
+            <td>${co}</td>
+            <td>${data.scored}</td>
+            <td>${data.total}</td>
+            <td>${attainment}%</td>
+            <td><span class="badge ${levelClass}">${level}</span></td>
+          </tr>
+        `;
+      });
+
+      // QUESTION REVIEW
+      const reviewContainer = document.getElementById("questionReviewContainer");
+      reviewContainer.innerHTML = "";
+
+      answers.forEach((ans,index)=>{
+        const correct = ans.marks === 1;
+
+        reviewContainer.innerHTML += `
+          <div class="question-card">
+            <h4>Q${index+1}. ${ans.question}</h4>
+
+            <div class="meta">
+              Course Outcome: <strong>${ans.courseOutcome}</strong>
+            </div>
+
+            <div class="${correct ? 'correct':'wrong'}">
+              Your Answer: ${
+                ans.selectedAnswer !== null && ans.selectedAnswer !== undefined
+                ? ans.selectedAnswer + 1
+                : "Not Answered"
+              }
+            </div>
+
+            <div class="correct">
+              Correct Answer: ${ans.correctAnswer + 1}
+            </div>
+
+            <div class="explanation">
+              <strong>Explanation:</strong><br>
+              ${ans.explanation || "No explanation provided."}
+            </div>
+          </div>
+        `;
+      });
+
+    }catch(error){
+      console.error(error);
+      document.getElementById("questionReviewContainer").innerHTML =
+        `<div class="empty">Error loading results.</div>`;
+    }
+  }
+
+  window.logoutStudent = function(){
+    localStorage.clear();
+    window.location.href = "index.html";
+  };
+
+  loadResults();
+
+</script>
+
+</body>
+</html>
