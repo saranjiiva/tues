@@ -5,13 +5,15 @@
 const APP_CONFIG = {
   // Firebase Configuration (replace with your Firebase project config)
   firebase: {
-    apiKey: "YOUR_FIREBASE_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyCxCexZLH3m2bni7wZ3Wqvs3BzJHzh9fxc",
+    authDomain: "tues-2f354.firebaseapp.com",
+    projectId: "tues-2f354",
+    storageBucket: "tues-2f354.firebasestorage.app",
+    messagingSenderId: "41087849708",
+    appId: "1:41087849708:web:25c1f91d54858a2111c1c9",
+    measurementId: "G-S6Z5JJ97CB"
+    databaseURL: https://tues-2f354-default-rtdb.asia-southeast1.firebasedatabase.app
+  
   },
 
   // Host password (change this!)
