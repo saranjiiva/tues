@@ -46,7 +46,6 @@
       min-height:100vh;
     }
 
-    /* SIDEBAR */
     .sidebar{
       background:rgba(2,6,23,0.95);
       border-right:1px solid var(--border);
@@ -82,7 +81,6 @@
     .brand p{
       font-size:12px;
       color:var(--muted);
-      margin-top:2px;
     }
 
     .menu{
@@ -116,7 +114,6 @@
       color:#fecaca!important;
     }
 
-    /* MAIN */
     .main{
       padding:28px;
     }
@@ -300,10 +297,10 @@
     </div>
 
     <div class="menu">
-      <button class="active">Dashboard</button>
-      <button onclick="goToWaitingRoom()">Waiting Room</button>
-      <button onclick="viewResults()">Results</button>
-      <button onclick="logoutStudent()" class="logout">Logout</button>
+      <button type="button" class="active">Dashboard</button>
+      <button type="button" id="waitingBtn">Waiting Room</button>
+      <button type="button" id="resultsBtn">Results</button>
+      <button type="button" id="logoutBtn" class="logout">Logout</button>
     </div>
   </aside>
 
@@ -340,7 +337,7 @@
       <div class="card">
         <h3>Current Score</h3>
         <div class="big" id="currentScore">0</div>
-        <div class="sub">Live score updates after session only</div>
+        <div class="sub">Visible after session completion</div>
       </div>
 
       <div class="card">
@@ -382,7 +379,7 @@
         </tbody>
       </table>
 
-      <button class="btn-primary" onclick="goToWaitingRoom()">
+      <button type="button" class="btn-primary" id="liveSessionBtn">
         Go to Live Session
       </button>
     </div>
@@ -391,7 +388,6 @@
 
 </div>
 
-<!-- FIREBASE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
@@ -401,14 +397,14 @@
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
-     apiKey: "AIzaSyCxCexZLH3m2bni7wZ3Wqvs3BzJHzh9fxc",
-  authDomain: "tues-2f354.firebaseapp.com",
-  databaseURL: "https://tues-2f354-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "tues-2f354",
-  storageBucket: "tues-2f354.firebasestorage.app",
-  messagingSenderId: "41087849708",
-  appId: "1:41087849708:web:25c1f91d54858a2111c1c9",
-  measurementId: "G-S6Z5JJ97CB"
+    apiKey: "AIzaSyCxCexZLH3m2bni7wZ3Wqvs3BzJHzh9fxc",
+    authDomain: "tues-2f354.firebaseapp.com",
+    databaseURL: "https://tues-2f354-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tues-2f354",
+    storageBucket: "tues-2f354.firebasestorage.app",
+    messagingSenderId: "41087849708",
+    appId: "1:41087849708:web:25c1f91d54858a2111c1c9",
+    measurementId: "G-S6Z5JJ97CB"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -417,67 +413,79 @@
   const studentName = localStorage.getItem("studentName");
   const rollNumber = localStorage.getItem("rollNumber");
 
-  if(!studentName || !rollNumber){
-    window.location.href = "index.html";
+  if (!studentName || !rollNumber) {
+    window.location.href = "./index.html";
   }
 
   document.getElementById("studentGreeting").textContent = `Welcome, ${studentName}`;
   document.getElementById("studentDetails").textContent = `Roll No: ${rollNumber}`;
 
-  async function loadStudentData(){
-    try{
-      const studentRef = doc(db,"students",rollNumber);
+  function getBasePath() {
+    return window.location.pathname.includes("/medco-assess/")
+      ? "/medco-assess/"
+      : "./";
+  }
+
+  function goToWaitingRoom() {
+    window.location.href = `${getBasePath()}waiting-room.html`;
+  }
+
+  function viewResults() {
+    window.location.href = `${getBasePath()}results.html`;
+  }
+
+  function logoutStudent() {
+    localStorage.clear();
+    window.location.href = `${getBasePath()}index.html`;
+  }
+
+  document.getElementById("waitingBtn").addEventListener("click", goToWaitingRoom);
+  document.getElementById("liveSessionBtn").addEventListener("click", goToWaitingRoom);
+  document.getElementById("resultsBtn").addEventListener("click", viewResults);
+  document.getElementById("logoutBtn").addEventListener("click", logoutStudent);
+
+  async function loadStudentData() {
+    try {
+      const studentRef = doc(db, "students", rollNumber);
       const studentSnap = await getDoc(studentRef);
 
-      if(studentSnap.exists()){
+      if (studentSnap.exists()) {
         const data = studentSnap.data();
 
         const completed = data.currentQuestion || 0;
-        const total = 50;
-        const progress = Math.round((completed/total)*100);
+        const total = data.totalQuestions || 50;
+        const progress = Math.round((completed / total) * 100);
 
+        document.getElementById("totalQuestions").textContent = total;
         document.getElementById("completedQuestions").textContent = completed;
         document.getElementById("currentScore").textContent = data.score || 0;
         document.getElementById("progressPercent").textContent = `${progress}%`;
         document.getElementById("progressFill").style.width = `${progress}%`;
 
-        if(data.status === "waiting"){
-          document.getElementById("sessionStatus").textContent = "Waiting for Host";
-          document.getElementById("sessionStatus").className = "status-wait";
-        }
-        else if(data.status === "live"){
-          document.getElementById("sessionStatus").textContent = "Exam Live";
-          document.getElementById("sessionStatus").className = "status-live";
-        }
-        else if(data.status === "completed"){
-          document.getElementById("sessionStatus").textContent = "Completed";
-          document.getElementById("sessionStatus").className = "status-live";
+        const sessionStatus = document.getElementById("sessionStatus");
+
+        if (data.status === "waiting") {
+          sessionStatus.textContent = "Waiting for Host";
+          sessionStatus.className = "status-wait";
+        } 
+        else if (data.status === "live") {
+          sessionStatus.textContent = "Exam Live";
+          sessionStatus.className = "status-live";
+        } 
+        else if (data.status === "completed") {
+          sessionStatus.textContent = "Completed";
+          sessionStatus.className = "status-live";
         }
       }
 
-    }catch(error){
-      console.error(error);
+    } catch (error) {
+      console.error("Error loading student data:", error);
     }
   }
 
   loadStudentData();
 
-  window.goToWaitingRoom = function(){
-    window.location.href = "waiting-room.html";
-  }
-
-  window.viewResults = function(){
-    window.location.href = "results.html";
-  }
-
-  window.logoutStudent = function(){
-    localStorage.clear();
-    window.location.href = "index.html";
-  }
-
-  // Auto refresh every 5 sec
-  setInterval(loadStudentData,5000);
-
+  setInterval(loadStudentData, 5000);
 </script>
 
 </body>
