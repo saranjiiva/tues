@@ -1,30 +1,1438 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QuizPro — Host Dashboard</title>
-<!-- Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
-<!-- Firebase & XLSX -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Shared Config -->
-<script src="js/shared/config.js"></script>
-<!-- Styles -->
-<link rel="stylesheet" href="css/styles.css" />
+<script src="../shared/config.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a40;
+    --accent: #6c63ff;
+    --accent2: #ff6b6b;
+    --accent3: #43e97b;
+    --accent4: #f8b500;
+    --text: #e8e8f0;
+    --text2: #8888aa;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; overflow-x:hidden; }
+  
+  /* LOGIN */
+  #loginScreen {
+    display:flex; align-items:center; justify-content:center; min-height:100vh;
+    background: radial-gradient(ellipse at 30% 50%, #1a0a3a 0%, #0a0a0f 70%);
+  }
+  .login-box {
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:48px; width:380px; text-align:center;
+    box-shadow: 0 0 80px rgba(108,99,255,0.15);
+  }
+  .login-box h1 { font-size:2rem; font-weight:800; color:var(--accent); margin-bottom:8px; }
+  .login-box p { color:var(--text2); margin-bottom:32px; font-family:var(--mono); font-size:0.75rem; }
+  .login-box input {
+    width:100%; padding:12px 16px; background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-family:var(--sans); font-size:1rem;
+    margin-bottom:16px; outline:none; transition:border-color 0.2s;
+  }
+  .login-box input:focus { border-color:var(--accent); }
+  .btn { 
+    padding:12px 24px; border:none; border-radius:8px; cursor:pointer;
+    font-family:var(--sans); font-size:0.9rem; font-weight:700; transition:all 0.2s; letter-spacing:0.05em;
+  }
+  .btn-primary { background:var(--accent); color:#fff; width:100%; }
+  .btn-primary:hover { background:#5a52e0; transform:translateY(-1px); }
+  .btn-danger { background:var(--accent2); color:#fff; }
+  .btn-danger:hover { background:#e05555; }
+  .btn-success { background:var(--accent3); color:#000; }
+  .btn-success:hover { background:#38d469; }
+  .btn-warning { background:var(--accent4); color:#000; }
+  .btn-warning:hover { background:#e5a500; }
+  .btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border); }
+  .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-sm { padding:8px 14px; font-size:0.8rem; }
+
+  /* MAIN APP */
+  #app { display:none; }
+  
+  /* HEADER */
+  header {
+    background:var(--surface); border-bottom:1px solid var(--border);
+    padding:16px 32px; display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:100;
+  }
+  .logo { font-size:1.4rem; font-weight:800; color:var(--accent); }
+  .logo span { color:var(--text2); font-size:0.75rem; font-family:var(--mono); display:block; }
+  .header-right { display:flex; align-items:center; gap:16px; }
+  .status-pill {
+    padding:6px 14px; border-radius:100px; font-size:0.75rem; font-family:var(--mono); font-weight:700;
+    display:flex; align-items:center; gap:6px;
+  }
+  .status-pill.active { background:rgba(67,233,123,0.15); color:var(--accent3); border:1px solid rgba(67,233,123,0.3); }
+  .status-pill.inactive { background:rgba(136,136,170,0.1); color:var(--text2); border:1px solid var(--border); }
+  .status-pill.waiting { background:rgba(248,181,0,0.15); color:var(--accent4); border:1px solid rgba(248,181,0,0.3); }
+  .pulse { width:8px; height:8px; border-radius:50%; background:currentColor; animation:pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* LAYOUT */
+  .container { max-width:1400px; margin:0 auto; padding:32px; }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+
+  /* CARDS */
+  .card {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px;
+  }
+  .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .card-title { font-size:0.7rem; font-family:var(--mono); color:var(--text2); text-transform:uppercase; letter-spacing:0.1em; }
+  
+  /* STAT CARDS */
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; }
+  .stat-card .label { font-size:0.7rem; font-family:var(--mono); color:var(--text2); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:8px; }
+  .stat-card .value { font-size:2.2rem; font-weight:800; font-family:var(--mono); }
+  .stat-card .sub { font-size:0.75rem; color:var(--text2); margin-top:4px; }
+  .stat-card.accent-purple .value { color:var(--accent); }
+  .stat-card.accent-green .value { color:var(--accent3); }
+  .stat-card.accent-red .value { color:var(--accent2); }
+  .stat-card.accent-yellow .value { color:var(--accent4); }
+
+  /* TABS */
+  .tabs { display:flex; gap:4px; margin-bottom:24px; background:var(--surface); border-radius:10px; padding:4px; border:1px solid var(--border); }
+  .tab { padding:10px 20px; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:700; color:var(--text2); transition:all 0.2s; border:none; background:none; font-family:var(--sans); }
+  .tab.active { background:var(--accent); color:#fff; }
+  .tab:hover:not(.active) { color:var(--text); }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  /* FORM ELEMENTS */
+  label { font-size:0.8rem; color:var(--text2); display:block; margin-bottom:6px; font-family:var(--mono); }
+  input[type=text], input[type=number], input[type=password], select, textarea {
+    width:100%; padding:10px 14px; background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-family:var(--sans); font-size:0.9rem;
+    outline:none; transition:border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--accent); }
+  .form-group { margin-bottom:16px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  textarea { min-height:100px; resize:vertical; }
+
+  /* QUESTION EDITOR */
+  .question-item {
+    background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+    padding:20px; margin-bottom:12px; position:relative;
+  }
+  .question-num {
+    position:absolute; top:-10px; left:16px; background:var(--accent);
+    color:#fff; font-size:0.7rem; font-family:var(--mono); font-weight:700;
+    padding:3px 10px; border-radius:100px;
+  }
+  .options-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; }
+  .option-input { display:flex; align-items:center; gap:8px; }
+  .option-input span { font-size:0.8rem; font-family:var(--mono); color:var(--text2); min-width:20px; }
+  .option-input input[type=text] { flex:1; }
+  .correct-select { display:flex; align-items:center; gap:8px; }
+  .correct-select label { margin:0; white-space:nowrap; }
+
+  /* CO MAPPING TABLE */
+  .co-table { width:100%; border-collapse:collapse; }
+  .co-table th { 
+    background:var(--surface2); padding:10px 14px; text-align:left;
+    font-size:0.75rem; font-family:var(--mono); color:var(--text2); text-transform:uppercase;
+    border-bottom:1px solid var(--border);
+  }
+  .co-table td { padding:10px 14px; border-bottom:1px solid var(--border); font-size:0.85rem; }
+  .co-table tr:last-child td { border-bottom:none; }
+  .co-table input[type=text] { padding:6px 10px; font-size:0.85rem; }
+
+  /* SESSION CONTROLS */
+  .control-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .control-btn {
+    padding:16px; border-radius:10px; border:none; cursor:pointer; font-family:var(--sans);
+    font-weight:700; font-size:0.9rem; transition:all 0.2s; display:flex; flex-direction:column;
+    align-items:center; gap:6px;
+  }
+  .control-btn .icon { font-size:1.5rem; }
+  .control-btn.start { background:rgba(67,233,123,0.15); color:var(--accent3); border:1px solid rgba(67,233,123,0.3); }
+  .control-btn.start:hover:not(:disabled) { background:rgba(67,233,123,0.25); }
+  .control-btn.stop { background:rgba(255,107,107,0.15); color:var(--accent2); border:1px solid rgba(255,107,107,0.3); }
+  .control-btn.stop:hover { background:rgba(255,107,107,0.25); }
+  .control-btn.reset { background:rgba(248,181,0,0.15); color:var(--accent4); border:1px solid rgba(248,181,0,0.3); }
+  .control-btn.reset:hover { background:rgba(248,181,0,0.25); }
+  .control-btn.dispatch { background:rgba(108,99,255,0.15); color:var(--accent); border:1px solid rgba(108,99,255,0.3); }
+  .control-btn.dispatch:hover:not(:disabled) { background:rgba(108,99,255,0.25); }
+  .control-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+  /* TIMER */
+  .timer-display {
+    font-size:3rem; font-family:var(--mono); font-weight:700; text-align:center;
+    color:var(--accent); letter-spacing:0.05em; margin:8px 0;
+  }
+  .timer-display.warning { color:var(--accent4); }
+  .timer-display.danger { color:var(--accent2); animation:blink 0.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* STUDENT TABLE */
+  .student-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  .student-table th {
+    background:var(--surface2); padding:10px 14px; text-align:left;
+    font-size:0.7rem; font-family:var(--mono); color:var(--text2); text-transform:uppercase;
+    position:sticky; top:0;
+  }
+  .student-table td { padding:10px 14px; border-bottom:1px solid var(--border); }
+  .student-table tr:hover td { background:var(--surface2); }
+  .badge { 
+    padding:3px 10px; border-radius:100px; font-size:0.7rem; font-family:var(--mono); font-weight:700;
+  }
+  .badge-green { background:rgba(67,233,123,0.15); color:var(--accent3); }
+  .badge-red { background:rgba(255,107,107,0.15); color:var(--accent2); }
+  .badge-yellow { background:rgba(248,181,0,0.15); color:var(--accent4); }
+  .badge-blue { background:rgba(108,99,255,0.15); color:var(--accent); }
+  .table-wrap { max-height:400px; overflow-y:auto; border-radius:8px; border:1px solid var(--border); }
+
+  /* CO RESULTS */
+  .co-bar-container { margin-bottom:16px; }
+  .co-bar-label { display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem; }
+  .co-bar-track { background:var(--surface2); border-radius:100px; height:12px; overflow:hidden; }
+  .co-bar-fill { height:100%; border-radius:100px; transition:width 1s ease; }
+  .co-bar-fill.high { background: linear-gradient(90deg, var(--accent3), #00c9ff); }
+  .co-bar-fill.mid { background: linear-gradient(90deg, var(--accent4), #ff9800); }
+  .co-bar-fill.low { background: linear-gradient(90deg, var(--accent2), #ff9068); }
+
+  /* SESSIONS */
+  .session-item {
+    background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+    padding:16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .session-info h4 { font-size:0.9rem; margin-bottom:4px; }
+  .session-info p { font-size:0.75rem; color:var(--text2); font-family:var(--mono); }
+  .session-actions { display:flex; gap:8px; }
+
+  /* ALERTS */
+  .alert {
+    padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:0.85rem; display:none;
+  }
+  .alert-success { background:rgba(67,233,123,0.15); border:1px solid rgba(67,233,123,0.3); color:var(--accent3); display:block; }
+  .alert-error { background:rgba(255,107,107,0.15); border:1px solid rgba(255,107,107,0.3); color:var(--accent2); display:block; }
+  .alert-info { background:rgba(108,99,255,0.15); border:1px solid rgba(108,99,255,0.3); color:var(--accent); display:block; }
+
+  /* ONLINE STUDENTS */
+  .online-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:8px; max-height:300px; overflow-y:auto; }
+  .student-chip {
+    background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+    padding:8px 12px; font-size:0.75rem; display:flex; align-items:center; gap:6px;
+  }
+  .student-chip .dot { width:6px; height:6px; border-radius:50%; background:var(--accent3); flex-shrink:0; }
+  .student-chip.done .dot { background:var(--accent); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--surface); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+
+  /* MODAL */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000;
+    display:none; align-items:center; justify-content:center;
+    backdrop-filter:blur(4px);
+  }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:32px; width:90%; max-width:500px; }
+  .modal h3 { font-size:1.2rem; margin-bottom:16px; }
+
+  .section-title {
+    font-size:1.3rem; font-weight:800; margin-bottom:6px;
+  }
+  .section-sub { color:var(--text2); font-size:0.85rem; margin-bottom:24px; font-family:var(--mono); }
+
+  .upload-area {
+    border:2px dashed var(--border); border-radius:10px; padding:32px; text-align:center;
+    cursor:pointer; transition:border-color 0.2s;
+  }
+  .upload-area:hover { border-color:var(--accent); }
+  .upload-area .icon { font-size:2rem; margin-bottom:8px; }
+  .upload-area p { color:var(--text2); font-size:0.85rem; }
+
+  .divider { height:1px; background:var(--border); margin:24px 0; }
+
+  .q-scroll { max-height:500px; overflow-y:auto; padding-right:4px; }
+
+  .info-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:0.85rem; }
+  .info-row:last-child { border-bottom:none; }
+  .info-row .key { color:var(--text2); font-family:var(--mono); }
+  .info-row .val { font-weight:700; }
+</style>
 </head>
 <body>
-<!-- Your HTML content remains unchanged, just remove inline styles and scripts -->
-<!-- ... -->
-<!-- Include your scripts at the end -->
-<script src="js/scripts/app.js"></script>
-<script src="js/scripts/questions.js"></script>
-<script src="js/scripts/coMapping.js"></script>
-<script src="js/scripts/sessionControl.js"></script>
-<script src="js/scripts/liveMonitor.js"></script>
-<script src="js/scripts/results.js"></script>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>⚡ QuizPro</h1>
+    <p>HOST DASHBOARD — RESTRICTED ACCESS</p>
+    <input type="password" id="loginPassword" placeholder="Enter host password" onkeypress="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-primary" onclick="doLogin()">Access Dashboard</button>
+    <div id="loginError" style="color:var(--accent2);font-size:0.8rem;margin-top:12px;"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header>
+    <div class="logo">
+      ⚡ QuizPro
+      <span>HOST DASHBOARD</span>
+    </div>
+    <div class="header-right">
+      <div class="status-pill" id="sessionStatusPill">
+        <div class="pulse"></div>
+        <span id="sessionStatusText">NO SESSION</span>
+      </div>
+      <div class="status-pill active">
+        <div class="pulse"></div>
+        <span id="onlineCount">0</span> ONLINE
+      </div>
+      <div id="headerTimer" style="font-family:var(--mono);font-size:0.9rem;color:var(--accent4);display:none;"></div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- STAT ROW -->
+    <div class="grid-4" style="margin-bottom:24px;">
+      <div class="stat-card accent-purple">
+        <div class="label">Students Online</div>
+        <div class="value" id="statOnline">0</div>
+        <div class="sub">of <span id="statTotal">0</span> registered</div>
+      </div>
+      <div class="stat-card accent-green">
+        <div class="label">Completed</div>
+        <div class="value" id="statCompleted">0</div>
+        <div class="sub">quiz submissions</div>
+      </div>
+      <div class="stat-card accent-yellow">
+        <div class="label">Questions Loaded</div>
+        <div class="value" id="statQuestions">0</div>
+        <div class="sub">ready to dispatch</div>
+      </div>
+      <div class="stat-card accent-red">
+        <div class="label">Session Time</div>
+        <div class="value timer-display" id="statTimer" style="font-size:1.8rem;">--:--</div>
+        <div class="sub">elapsed</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('setup')">⚙️ Setup</button>
+      <button class="tab" onclick="switchTab('questions')">📝 Questions</button>
+      <button class="tab" onclick="switchTab('comap')">🎯 CO Mapping</button>
+      <button class="tab" onclick="switchTab('session')">🎮 Session Control</button>
+      <button class="tab" onclick="switchTab('live')">📡 Live Monitor</button>
+      <button class="tab" onclick="switchTab('results')">📊 Results</button>
+      <button class="tab" onclick="switchTab('history')">🗂️ History</button>
+    </div>
+
+    <!-- ===== SETUP TAB ===== -->
+    <div class="tab-content active" id="tab-setup">
+      <div class="section-title">Session Setup</div>
+      <div class="section-sub">Configure the quiz session before dispatching to students</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Session Configuration</div></div>
+          <div class="form-group">
+            <label>Session Name / Title</label>
+            <input type="text" id="sessionName" placeholder="e.g. Mid-Semester Exam - CS301" value="Mid-Semester Exam">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Course Code</label>
+              <input type="text" id="courseCode" placeholder="e.g. CS301" value="CS301">
+            </div>
+            <div class="form-group">
+              <label>Batch / Section</label>
+              <input type="text" id="batchSection" placeholder="e.g. B.Tech CSE - Sec A" value="B.Tech CSE">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Total Questions</label>
+              <input type="number" id="totalQuestions" value="50" min="1" max="100">
+            </div>
+            <div class="form-group">
+              <label>Default Time/Question (sec)</label>
+              <input type="number" id="defaultTimeSec" value="60" min="10" max="300">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Max Students</label>
+              <input type="number" id="maxStudents" value="250" min="1" max="500">
+            </div>
+            <div class="form-group">
+              <label>Randomize Questions</label>
+              <select id="randomizeQ">
+                <option value="1">Yes — Different for each student</option>
+                <option value="0">No — Same order for all</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="saveSetup()" style="width:100%;">💾 Save Setup</button>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Student Portal Info</div></div>
+          <div style="background:var(--surface2);border-radius:10px;padding:20px;margin-bottom:16px;">
+            <div class="info-row">
+              <span class="key">Student URL</span>
+              <span class="val" style="font-size:0.8rem;color:var(--accent);" id="studentUrl">student/index.html</span>
+            </div>
+            <div class="info-row">
+              <span class="key">Session Code</span>
+              <span class="val" id="sessionCodeDisplay" style="font-family:var(--mono);font-size:1.2rem;color:var(--accent4);">—</span>
+            </div>
+            <div class="info-row">
+              <span class="key">Status</span>
+              <span class="val" id="setupStatus">Not Started</span>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="card-title" style="margin-bottom:12px;">Quick Stats</div>
+          <div class="info-row">
+            <span class="key">Questions Loaded</span>
+            <span class="val" id="qLoadedInfo">0 / 50</span>
+          </div>
+          <div class="info-row">
+            <span class="key">CO Mapping</span>
+            <span class="val" id="coMappedInfo">Configured</span>
+          </div>
+          <div class="info-row">
+            <span class="key">Firebase</span>
+            <span class="val" id="fbStatus" style="color:var(--accent4);">Checking...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== QUESTIONS TAB ===== -->
+    <div class="tab-content" id="tab-questions">
+      <div class="section-title">Question Bank</div>
+      <div class="section-sub">Load questions via JSON file or enter manually</div>
+      <div class="grid-2" style="margin-bottom:24px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Upload JSON File</div></div>
+          <div class="upload-area" onclick="document.getElementById('jsonFileInput').click()">
+            <div class="icon">📂</div>
+            <p>Click to upload questions.json</p>
+            <p style="font-size:0.75rem;margin-top:4px;">Format: Array of question objects</p>
+          </div>
+          <input type="file" id="jsonFileInput" accept=".json" style="display:none;" onchange="loadQuestionsFromJSON(event)">
+          <div style="margin-top:12px;">
+            <button class="btn btn-ghost btn-sm" onclick="downloadSampleJSON()">⬇️ Download Sample JSON</button>
+            <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="loadSampleQuestions()">🎲 Load Sample 50 Qs</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Add Question Manually</div>
+            <button class="btn btn-primary btn-sm" onclick="addBlankQuestion()">+ Add</button>
+          </div>
+          <p style="color:var(--text2);font-size:0.85rem;">Scroll down to see/edit all loaded questions. Each question has 4 options, correct answer selector, and explanation field.</p>
+          <div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:8px;font-family:var(--mono);font-size:0.75rem;color:var(--text2);">
+            <div>Questions loaded: <span id="qCount" style="color:var(--accent4);">0</span></div>
+            <div>Status: <span id="qStatus" style="color:var(--accent3);">Ready</span></div>
+          </div>
+          <div style="margin-top:12px;">
+            <button class="btn btn-danger btn-sm" onclick="clearAllQuestions()">🗑️ Clear All</button>
+            <button class="btn btn-success btn-sm" style="margin-left:8px;" onclick="saveQuestionsToSession()">💾 Save to Session</button>
+          </div>
+        </div>
+      </div>
+      <div class="q-scroll" id="questionsList"></div>
+    </div>
+
+    <!-- ===== CO MAPPING TAB ===== -->
+    <div class="tab-content" id="tab-comap">
+      <div class="section-title">Course Outcome Mapping</div>
+      <div class="section-sub">Map questions to course outcomes. Each CO score = (obtained marks / total marks for that CO) × 100%</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">CO Configuration</div>
+          <button class="btn btn-primary btn-sm" onclick="addCO()">+ Add CO</button>
+        </div>
+        <div style="margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:8px;font-size:0.8rem;color:var(--text2);">
+          Enter comma-separated question numbers (1-based) for each CO. E.g., "1,2,3,4,5" for questions 1 to 5.
+        </div>
+        <table class="co-table">
+          <thead>
+            <tr>
+              <th>CO Label</th>
+              <th>CO Name / Description</th>
+              <th>Question Numbers (comma-separated)</th>
+              <th>Q Count</th>
+              <th>Max Marks</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="coTableBody"></tbody>
+        </table>
+        <div style="margin-top:16px;display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="saveCOMapping()">💾 Save CO Mapping</button>
+          <button class="btn btn-ghost" onclick="resetCOMapping()">↺ Reset to Default</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SESSION CONTROL TAB ===== -->
+    <div class="tab-content" id="tab-session">
+      <div class="section-title">Session Control</div>
+      <div class="section-sub">Manage quiz session lifecycle</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Session Controls</div></div>
+          <div class="control-grid" style="margin-bottom:24px;">
+            <button class="control-btn dispatch" id="btnDispatch" onclick="dispatchQuestions()" disabled>
+              <span class="icon">🚀</span>Dispatch Questions
+            </button>
+            <button class="control-btn start" id="btnStart" onclick="startSession()" disabled>
+              <span class="icon">▶️</span>Start Session
+            </button>
+            <button class="control-btn stop" id="btnStop" onclick="endSession()" disabled>
+              <span class="icon">⏹️</span>End Session
+            </button>
+            <button class="control-btn reset" onclick="resetSession()">
+              <span class="icon">🔄</span>Reset Session
+            </button>
+            <button class="control-btn dispatch" onclick="switchTab('live')">
+              <span class="icon">📡</span>Live Monitor
+            </button>
+            <button class="control-btn start" onclick="calculateAndShowResults()">
+              <span class="icon">📊</span>Calculate Results
+            </button>
+          </div>
+          <div class="divider"></div>
+          <div class="card-title" style="margin-bottom:12px;">Session Timer</div>
+          <div class="timer-display" id="sessionTimerDisplay">00:00:00</div>
+          <div style="text-align:center;color:var(--text2);font-size:0.8rem;margin-top:4px;">Session Elapsed Time</div>
+          <div style="margin-top:20px;">
+            <label>Custom Session Duration (minutes, 0 = unlimited)</label>
+            <input type="number" id="sessionDuration" value="90" min="0" max="300">
+            <div style="margin-top:8px;font-size:0.75rem;color:var(--text2);">Auto-ends session when time expires</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Session Log</div></div>
+          <div id="sessionLog" style="font-family:var(--mono);font-size:0.78rem;color:var(--text2);max-height:400px;overflow-y:auto;line-height:2;">
+            <div style="color:var(--accent);">// Session log will appear here</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LIVE MONITOR TAB ===== -->
+    <div class="tab-content" id="tab-live">
+      <div class="section-title">Live Monitor</div>
+      <div class="section-sub">Real-time student activity during quiz</div>
+      <div class="grid-2" style="margin-bottom:24px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Online Students (<span id="liveOnlineCount">0</span>)</div>
+            <div style="display:flex;gap:8px;">
+              <span class="badge badge-green">● Active</span>
+              <span class="badge badge-blue">✓ Done</span>
+            </div>
+          </div>
+          <div class="online-grid" id="onlineStudentsGrid">
+            <div style="color:var(--text2);font-size:0.8rem;grid-column:1/-1;">Waiting for students...</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Completion Progress</div></div>
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:0.85rem;">Completed</span>
+              <span style="font-family:var(--mono);color:var(--accent3);" id="progressText">0 / 0</span>
+            </div>
+            <div style="background:var(--surface2);border-radius:100px;height:16px;overflow:hidden;">
+              <div id="progressBar" style="height:100%;background:linear-gradient(90deg,var(--accent3),var(--accent));border-radius:100px;width:0%;transition:width 0.5s;"></div>
+            </div>
+          </div>
+          <div class="info-row">
+            <span class="key">Session Status</span>
+            <span class="val" id="liveStatus">—</span>
+          </div>
+          <div class="info-row">
+            <span class="key">Avg Time Remaining</span>
+            <span class="val" id="liveAvgTime">—</span>
+          </div>
+          <div class="info-row">
+            <span class="key">Last Update</span>
+            <span class="val" id="liveLastUpdate">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Live Student List</div>
+          <input type="text" placeholder="Search student..." style="width:200px;padding:6px 12px;" id="liveSearch" oninput="filterLiveTable()">
+        </div>
+        <div class="table-wrap">
+          <table class="student-table">
+            <thead>
+              <tr>
+                <th>#</th><th>Name</th><th>Roll No</th><th>Status</th><th>Score</th><th>Joined At</th>
+              </tr>
+            </thead>
+            <tbody id="liveStudentTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RESULTS TAB ===== -->
+    <div class="tab-content" id="tab-results">
+      <div class="section-title">Results & Analytics</div>
+      <div class="section-sub">Course outcome analysis and individual results</div>
+
+      <div class="grid-3" style="margin-bottom:24px;">
+        <div class="stat-card accent-purple">
+          <div class="label">Class Average</div>
+          <div class="value" id="resClassAvg">—</div>
+          <div class="sub">out of <span id="resTotalMarks">50</span> marks</div>
+        </div>
+        <div class="stat-card accent-green">
+          <div class="label">Highest Score</div>
+          <div class="value" id="resHighest">—</div>
+        </div>
+        <div class="stat-card accent-red">
+          <div class="label">Lowest Score</div>
+          <div class="value" id="resLowest">—</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:24px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Class Overall CO Performance</div>
+          </div>
+          <div id="classCoResults">
+            <div style="color:var(--text2);font-size:0.85rem;">Calculate results to view CO analysis</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Actions</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <button class="btn btn-success" onclick="calculateAndShowResults()">🔄 Refresh Results</button>
+            <button class="btn btn-primary" onclick="exportAllData()">📥 Export All Data (Excel)</button>
+            <button class="btn btn-ghost" onclick="exportIndividualMarks()">📊 Export Individual Marks</button>
+            <button class="btn btn-ghost" onclick="exportCOData()">🎯 Export CO Analysis</button>
+            <button class="btn btn-ghost" onclick="saveCurrentSession()">💾 Save Session to History</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Individual Student Results</div>
+          <input type="text" placeholder="Search..." style="width:200px;padding:6px 12px;" id="resSearch" oninput="filterResultsTable()">
+        </div>
+        <div class="table-wrap" style="max-height:500px;">
+          <table class="student-table" id="resultsTable">
+            <thead>
+              <tr>
+                <th>#</th><th>Name</th><th>Roll No</th><th>Score</th><th>%</th>
+                <th id="coHead1">CO 1.1</th>
+                <th id="coHead2">CO 1.2</th>
+                <th id="coHead3">CO 2.1</th>
+                <th id="coHead4">CO 2.2</th>
+                <th id="coHead5">CO 3.1</th>
+                <th id="coHead6">CO 3.2</th>
+                <th>Grade</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== HISTORY TAB ===== -->
+    <div class="tab-content" id="tab-history">
+      <div class="section-title">Session History</div>
+      <div class="section-sub">All saved sessions with results — downloadable anytime</div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div class="card-title">Saved Sessions</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadSavedSessions()">🔄 Refresh</button>
+        </div>
+        <div id="sessionHistoryList">
+          <div style="color:var(--text2);font-size:0.85rem;">No saved sessions yet.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+</div><!-- /app -->
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="modalTitle">Confirm Action</h3>
+    <p id="modalMessage" style="color:var(--text2);margin-bottom:24px;font-size:0.9rem;"></p>
+    <div style="display:flex;gap:12px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modalConfirmBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================== STATE ==================
+let questions = [];
+let coMapping = {};
+let sessionActive = false;
+let sessionStartTime = null;
+let timerInterval = null;
+let sessionTimerInterval = null;
+let db = null;
+let sessionId = null;
+let studentsData = {};
+let setupConfig = {};
+
+// ================== INIT ==================
+function doLogin() {
+  const pwd = document.getElementById('loginPassword').value;
+  if (pwd === APP_CONFIG.hostPassword) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+  } else {
+    document.getElementById('loginError').textContent = '❌ Incorrect password';
+  }
+}
+
+function initApp() {
+  // Init Firebase
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(APP_CONFIG.firebase);
+    }
+    db = firebase.database();
+    document.getElementById('fbStatus').textContent = '✅ Connected';
+    document.getElementById('fbStatus').style.color = 'var(--accent3)';
+    listenToStudents();
+  } catch(e) {
+    document.getElementById('fbStatus').textContent = '⚠️ Local Mode (No Firebase)';
+    document.getElementById('fbStatus').style.color = 'var(--accent4)';
+    console.warn('Firebase not configured, running in local mode');
+  }
+
+  // Load saved CO mapping
+  const saved = localStorage.getItem('coMapping');
+  if (saved) coMapping = JSON.parse(saved);
+  else coMapping = JSON.parse(JSON.stringify(DEFAULT_CO_MAPPING));
+
+  // Load saved questions
+  const savedQ = localStorage.getItem('hostQuestions');
+  if (savedQ) { questions = JSON.parse(savedQ); renderQuestions(); updateQCount(); }
+
+  // Generate session ID
+  sessionId = localStorage.getItem('currentSessionId') || generateId();
+  localStorage.setItem('currentSessionId', sessionId);
+  document.getElementById('sessionCodeDisplay').textContent = sessionId.toUpperCase().slice(0,8);
+  document.getElementById('studentUrl').textContent = window.location.origin + '/student/index.html?session=' + sessionId;
+
+  renderCOTable();
+  loadSavedSessions();
+  updateControlButtons();
+}
+
+function generateId() { return Math.random().toString(36).substr(2,9); }
+
+// ================== FIREBASE LISTENER ==================
+function listenToStudents() {
+  if (!db) return;
+  db.ref('sessions/' + sessionId + '/students').on('value', snap => {
+    studentsData = snap.val() || {};
+    updateLiveMonitor();
+    updateStats();
+  });
+  db.ref('sessions/' + sessionId + '/config').on('value', snap => {
+    const cfg = snap.val();
+    if (cfg) setupConfig = cfg;
+  });
+}
+
+// ================== SETUP ==================
+function saveSetup() {
+  setupConfig = {
+    sessionName: document.getElementById('sessionName').value,
+    courseCode: document.getElementById('courseCode').value,
+    batchSection: document.getElementById('batchSection').value,
+    totalQuestions: parseInt(document.getElementById('totalQuestions').value),
+    defaultTimeSec: parseInt(document.getElementById('defaultTimeSec').value),
+    maxStudents: parseInt(document.getElementById('maxStudents').value),
+    randomizeQ: document.getElementById('randomizeQ').value === '1',
+    status: 'configured',
+    createdAt: Date.now()
+  };
+  localStorage.setItem('sessionConfig', JSON.stringify(setupConfig));
+  if (db) db.ref('sessions/' + sessionId + '/config').set(setupConfig);
+  document.getElementById('setupStatus').textContent = '✅ Configured';
+  addLog('✅ Session configured: ' + setupConfig.sessionName);
+  updateControlButtons();
+  alert('Setup saved!');
+}
+
+// ================== QUESTIONS ==================
+function loadQuestionsFromJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      questions = JSON.parse(ev.target.result);
+      renderQuestions();
+      updateQCount();
+      addLog(`📁 Loaded ${questions.length} questions from file`);
+    } catch(err) { alert('Invalid JSON file'); }
+  };
+  reader.readAsText(file);
+}
+
+function loadSampleQuestions() {
+  // Use the 50 hardcoded questions (loaded from sample)
+  fetch('../data/sample-questions.json')
+    .then(r => r.json())
+    .then(data => {
+      questions = data;
+      renderQuestions();
+      updateQCount();
+      addLog(`🎲 Loaded ${questions.length} sample questions`);
+    })
+    .catch(() => {
+      // Fallback: generate simple questions
+      questions = Array.from({length:50}, (_, i) => ({
+        id: i+1,
+        question: `Sample Question ${i+1}: What is the correct answer?`,
+        options: ['A) Option A', 'B) Option B', 'C) Option C', 'D) Option D'],
+        correct: 0,
+        explanation: `Explanation for question ${i+1}. The correct answer is Option A.`
+      }));
+      renderQuestions();
+      updateQCount();
+      addLog(`🎲 Generated ${questions.length} placeholder questions`);
+    });
+}
+
+function downloadSampleJSON() {
+  const sample = [
+    {
+      "id": 1,
+      "question": "Your question text here?",
+      "options": ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+      "correct": 0,
+      "explanation": "Explanation of the correct answer."
+    }
+  ];
+  const blob = new Blob([JSON.stringify(sample, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'questions-template.json';
+  a.click();
+}
+
+function addBlankQuestion() {
+  questions.push({
+    id: questions.length + 1,
+    question: '',
+    options: ['A) ', 'B) ', 'C) ', 'D) '],
+    correct: 0,
+    explanation: ''
+  });
+  renderQuestions();
+  updateQCount();
+  // Scroll to bottom
+  setTimeout(() => {
+    const ql = document.getElementById('questionsList');
+    ql.scrollTop = ql.scrollHeight;
+  }, 100);
+}
+
+function renderQuestions() {
+  const container = document.getElementById('questionsList');
+  container.innerHTML = questions.map((q, i) => `
+    <div class="question-item" id="qitem-${i}">
+      <div class="question-num">Q${i+1}</div>
+      <div style="margin-bottom:10px;">
+        <label>Question Text</label>
+        <textarea onchange="updateQ(${i},'question',this.value)">${q.question}</textarea>
+      </div>
+      <div class="options-grid">
+        ${['A','B','C','D'].map((opt, oi) => `
+          <div class="option-input">
+            <span>${opt})</span>
+            <input type="text" value="${(q.options[oi]||'').replace(/^[A-D]\)\s*/,'')}" onchange="updateQOption(${i},${oi},this.value)" placeholder="Option ${opt}">
+          </div>
+        `).join('')}
+      </div>
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:10px;">
+        <div class="correct-select">
+          <label>Correct Answer:</label>
+          <select onchange="updateQ(${i},'correct',parseInt(this.value))">
+            ${['A','B','C','D'].map((o,oi) => `<option value="${oi}" ${q.correct===oi?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeQuestion(${i})">🗑️ Remove</button>
+      </div>
+      <div>
+        <label>Explanation</label>
+        <textarea onchange="updateQ(${i},'explanation',this.value)" style="min-height:60px;">${q.explanation||''}</textarea>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateQ(idx, field, val) { questions[idx][field] = val; }
+function updateQOption(idx, oi, val) {
+  const prefix = ['A','B','C','D'][oi];
+  questions[idx].options[oi] = prefix + ') ' + val;
+}
+function removeQuestion(idx) { questions.splice(idx, 1); renderQuestions(); updateQCount(); }
+function clearAllQuestions() { if(confirm('Clear all questions?')) { questions = []; renderQuestions(); updateQCount(); } }
+function updateQCount() {
+  document.getElementById('qCount').textContent = questions.length;
+  document.getElementById('statQuestions').textContent = questions.length;
+  document.getElementById('qLoadedInfo').textContent = questions.length + ' / ' + (document.getElementById('totalQuestions').value||50);
+}
+function saveQuestionsToSession() {
+  localStorage.setItem('hostQuestions', JSON.stringify(questions));
+  updateQCount();
+  addLog(`💾 ${questions.length} questions saved`);
+  alert('Questions saved!');
+}
+
+// ================== CO MAPPING ==================
+function renderCOTable() {
+  const tbody = document.getElementById('coTableBody');
+  tbody.innerHTML = Object.entries(coMapping).map(([key, co]) => {
+    const qList = co.questions.map(q => q+1).join(',');
+    const maxMarks = co.questions.length;
+    return `<tr>
+      <td><input type="text" value="${key}" style="width:80px;" data-co-key="${key}" class="co-key-input" onchange="updateCOKey(this,'${key}')"></td>
+      <td><input type="text" value="${co.label}" style="width:200px;" data-key="${key}" class="co-label-input"></td>
+      <td><input type="text" value="${qList}" style="width:250px;" data-key="${key}" class="co-q-input" oninput="updateCOQCount(this,'${key}')"></td>
+      <td id="coQCount-${key}">${maxMarks}</td>
+      <td id="coMaxMarks-${key}">${maxMarks}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeCO('${key}')">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateCOQCount(el, key) {
+  const nums = el.value.split(',').filter(x => x.trim() && !isNaN(parseInt(x.trim())));
+  document.getElementById('coQCount-' + key).textContent = nums.length;
+  document.getElementById('coMaxMarks-' + key).textContent = nums.length;
+}
+
+function updateCOKey(el, oldKey) {
+  // Will be handled on save
+}
+
+function addCO() {
+  const newKey = 'CO ' + (Object.keys(coMapping).length + 1) + '.1';
+  coMapping[newKey] = { questions: [], label: newKey + ' - New Outcome' };
+  renderCOTable();
+}
+
+function removeCO(key) {
+  delete coMapping[key];
+  renderCOTable();
+}
+
+function saveCOMapping() {
+  const rows = document.querySelectorAll('#coTableBody tr');
+  const newMapping = {};
+  rows.forEach(row => {
+    const keyEl = row.querySelector('.co-key-input');
+    const labelEl = row.querySelector('.co-label-input');
+    const qEl = row.querySelector('.co-q-input');
+    if (keyEl && labelEl && qEl) {
+      const key = keyEl.value.trim();
+      const qNums = qEl.value.split(',').map(x => parseInt(x.trim())-1).filter(x => !isNaN(x) && x >= 0);
+      newMapping[key] = { questions: qNums, label: labelEl.value.trim() };
+    }
+  });
+  coMapping = newMapping;
+  localStorage.setItem('coMapping', JSON.stringify(coMapping));
+  if (db) db.ref('sessions/' + sessionId + '/coMapping').set(coMapping);
+  document.getElementById('coMappedInfo').textContent = Object.keys(coMapping).length + ' COs configured';
+  addLog('🎯 CO Mapping saved: ' + Object.keys(coMapping).length + ' outcomes');
+  alert('CO Mapping saved!');
+}
+
+function resetCOMapping() {
+  coMapping = JSON.parse(JSON.stringify(DEFAULT_CO_MAPPING));
+  renderCOTable();
+}
+
+// ================== SESSION CONTROL ==================
+function dispatchQuestions() {
+  if (questions.length === 0) { alert('Load questions first!'); return; }
+  showConfirm('Dispatch Questions', 
+    `Send ${questions.length} questions to student portal? Students will see questions once session starts.`,
+    () => {
+      const payload = { questions, coMapping, setupConfig, dispatched: true, dispatchedAt: Date.now(), sessionId };
+      localStorage.setItem('dispatchedQuestions', JSON.stringify(payload));
+      if (db) db.ref('sessions/' + sessionId + '/dispatch').set(payload);
+      addLog(`🚀 Dispatched ${questions.length} questions at ` + new Date().toLocaleTimeString());
+      document.getElementById('btnStart').disabled = false;
+      updateControlButtons();
+    }
+  );
+}
+
+function startSession() {
+  showConfirm('Start Session', 'Allow students to begin taking the quiz?', () => {
+    sessionActive = true;
+    sessionStartTime = Date.now();
+    const state = { active: true, startedAt: sessionStartTime, status: 'active' };
+    localStorage.setItem('sessionState', JSON.stringify(state));
+    if (db) db.ref('sessions/' + sessionId + '/state').set(state);
+    document.getElementById('btnStop').disabled = false;
+    document.getElementById('btnStart').disabled = true;
+    startSessionTimer();
+    updateSessionPill('active');
+    addLog('▶️ Session STARTED at ' + new Date().toLocaleTimeString());
+    updateControlButtons();
+    
+    // Auto-end timer
+    const dur = parseInt(document.getElementById('sessionDuration').value);
+    if (dur > 0) {
+      setTimeout(() => { if(sessionActive) endSession(); }, dur * 60 * 1000);
+    }
+  });
+}
+
+function endSession() {
+  showConfirm('End Session', 'This will close the quiz for all students. Results will be calculated.', () => {
+    sessionActive = false;
+    const state = { active: false, endedAt: Date.now(), status: 'ended' };
+    localStorage.setItem('sessionState', JSON.stringify(state));
+    if (db) db.ref('sessions/' + sessionId + '/state').set(state);
+    clearInterval(sessionTimerInterval);
+    document.getElementById('btnStop').disabled = true;
+    updateSessionPill('inactive');
+    addLog('⏹️ Session ENDED at ' + new Date().toLocaleTimeString());
+    calculateAndShowResults();
+    saveCurrentSession();
+  });
+}
+
+function resetSession() {
+  showConfirm('Reset Session', 'This will clear ALL session data including student submissions. Are you sure?', () => {
+    sessionActive = false;
+    sessionStartTime = null;
+    studentsData = {};
+    sessionId = generateId();
+    localStorage.setItem('currentSessionId', sessionId);
+    localStorage.removeItem('sessionState');
+    localStorage.removeItem('dispatchedQuestions');
+    if (db) db.ref('sessions/' + sessionId).remove();
+    clearInterval(sessionTimerInterval);
+    document.getElementById('sessionTimerDisplay').textContent = '00:00:00';
+    document.getElementById('statTimer').textContent = '--:--';
+    updateSessionPill('inactive');
+    addLog('🔄 Session RESET. New Session ID: ' + sessionId.toUpperCase().slice(0,8));
+    document.getElementById('sessionCodeDisplay').textContent = sessionId.toUpperCase().slice(0,8);
+    updateControlButtons();
+    updateStats();
+  });
+}
+
+function updateControlButtons() {
+  const dispatched = !!localStorage.getItem('dispatchedQuestions');
+  const state = JSON.parse(localStorage.getItem('sessionState') || '{}');
+  document.getElementById('btnDispatch').disabled = questions.length === 0;
+  document.getElementById('btnStart').disabled = !dispatched || (state.status === 'active');
+  document.getElementById('btnStop').disabled = state.status !== 'active';
+}
+
+function startSessionTimer() {
+  sessionTimerInterval = setInterval(() => {
+    if (!sessionStartTime) return;
+    const elapsed = Date.now() - sessionStartTime;
+    const h = Math.floor(elapsed/3600000);
+    const m = Math.floor((elapsed%3600000)/60000);
+    const s = Math.floor((elapsed%60000)/1000);
+    const str = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    document.getElementById('sessionTimerDisplay').textContent = str;
+    document.getElementById('statTimer').textContent = str;
+    document.getElementById('headerTimer').textContent = str;
+    document.getElementById('headerTimer').style.display = 'block';
+  }, 1000);
+}
+
+function updateSessionPill(status) {
+  const pill = document.getElementById('sessionStatusPill');
+  const txt = document.getElementById('sessionStatusText');
+  pill.className = 'status-pill ' + (status === 'active' ? 'active' : status === 'waiting' ? 'waiting' : 'inactive');
+  txt.textContent = status === 'active' ? 'SESSION ACTIVE' : status === 'waiting' ? 'DISPATCHED' : 'NO SESSION';
+}
+
+// ================== LIVE MONITOR ==================
+function updateLiveMonitor() {
+  const students = Object.values(studentsData);
+  const online = students.filter(s => s.online);
+  const done = students.filter(s => s.submitted);
+  
+  document.getElementById('liveOnlineCount').textContent = online.length;
+  document.getElementById('onlineCount').textContent = online.length;
+  
+  const grid = document.getElementById('onlineStudentsGrid');
+  if (students.length === 0) {
+    grid.innerHTML = '<div style="color:var(--text2);font-size:0.8rem;grid-column:1/-1;">Waiting for students...</div>';
+  } else {
+    grid.innerHTML = online.map(s => `
+      <div class="student-chip ${s.submitted?'done':''}">
+        <div class="dot"></div>
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${s.name}">${s.name}</span>
+      </div>
+    `).join('');
+  }
+  
+  const total = students.length;
+  const pct = total > 0 ? Math.round((done.length/total)*100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${done.length} / ${total}`;
+  document.getElementById('liveLastUpdate').textContent = new Date().toLocaleTimeString();
+  
+  // Live table
+  const tbody = document.getElementById('liveStudentTable');
+  tbody.innerHTML = students.map((s,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${s.name}</td>
+      <td style="font-family:var(--mono)">${s.rollNo}</td>
+      <td>
+        <span class="badge ${s.submitted?'badge-blue':s.online?'badge-green':'badge-red'}">
+          ${s.submitted?'Submitted':s.online?'Active':'Offline'}
+        </span>
+      </td>
+      <td style="font-family:var(--mono)">${s.submitted ? s.score+'/'+s.totalQ : '—'}</td>
+      <td style="font-family:var(--mono);font-size:0.75rem;">${s.joinedAt ? new Date(s.joinedAt).toLocaleTimeString() : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+function filterLiveTable() {
+  const q = document.getElementById('liveSearch').value.toLowerCase();
+  document.querySelectorAll('#liveStudentTable tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function updateStats() {
+  const students = Object.values(studentsData);
+  document.getElementById('statOnline').textContent = students.filter(s=>s.online).length;
+  document.getElementById('statTotal').textContent = students.length;
+  document.getElementById('statCompleted').textContent = students.filter(s=>s.submitted).length;
+}
+
+// ================== RESULTS ==================
+function calculateAndShowResults() {
+  const students = Object.values(studentsData);
+  const submitted = students.filter(s => s.submitted && s.answers);
+  
+  if (submitted.length === 0) {
+    // Try localStorage fallback
+    const localResults = JSON.parse(localStorage.getItem('studentResults_' + sessionId) || '[]');
+    if (localResults.length > 0) {
+      renderResults(localResults);
+      return;
+    }
+    alert('No submissions found yet.');
+    return;
+  }
+  
+  const results = submitted.map(s => {
+    const score = s.score || 0;
+    const coScores = calculateStudentCO(s.answers);
+    return { ...s, score, coScores };
+  });
+  
+  renderResults(results);
+}
+
+function calculateStudentCO(answers) {
+  const coScores = {};
+  Object.entries(coMapping).forEach(([coKey, co]) => {
+    let obtained = 0, total = co.questions.length;
+    co.questions.forEach(qi => {
+      if (answers && answers[qi] !== undefined && answers[qi] === questions[qi]?.correct) obtained++;
+    });
+    coScores[coKey] = { obtained, total, pct: total > 0 ? Math.round((obtained/total)*100) : 0 };
+  });
+  return coScores;
+}
+
+function renderResults(results) {
+  if (results.length === 0) return;
+  const scores = results.map(r => r.score || 0);
+  const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+  
+  document.getElementById('resClassAvg').textContent = avg.toFixed(1);
+  document.getElementById('resHighest').textContent = Math.max(...scores);
+  document.getElementById('resLowest').textContent = Math.min(...scores);
+  
+  // Class CO averages
+  const coKeys = Object.keys(coMapping);
+  const classCoAvg = {};
+  coKeys.forEach(key => {
+    const pcts = results.map(r => r.coScores?.[key]?.pct || 0);
+    classCoAvg[key] = pcts.reduce((a,b)=>a+b,0)/pcts.length;
+  });
+  
+  const classCoDiv = document.getElementById('classCoResults');
+  classCoDiv.innerHTML = coKeys.map(key => {
+    const pct = classCoAvg[key] || 0;
+    const cls = pct >= 70 ? 'high' : pct >= 50 ? 'mid' : 'low';
+    return `
+      <div class="co-bar-container">
+        <div class="co-bar-label">
+          <span>${coMapping[key].label}</span>
+          <span style="font-family:var(--mono);font-weight:700;">${pct.toFixed(1)}%</span>
+        </div>
+        <div class="co-bar-track">
+          <div class="co-bar-fill ${cls}" style="width:${pct}%"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // Individual table
+  const tbody = document.getElementById('resultsTableBody');
+  tbody.innerHTML = results.sort((a,b)=>b.score-a.score).map((r,i) => {
+    const pct = Math.round((r.score/(questions.length||50))*100);
+    const grade = pct>=90?'S':pct>=80?'A':pct>=70?'B':pct>=60?'C':pct>=50?'D':'F';
+    const gradeColor = pct>=70?'badge-green':pct>=50?'badge-yellow':'badge-red';
+    const coScoresHtml = coKeys.map(key => {
+      const cs = r.coScores?.[key];
+      if (!cs) return '<td>—</td>';
+      const c = cs.pct>=70?'var(--accent3)':cs.pct>=50?'var(--accent4)':'var(--accent2)';
+      return `<td style="font-family:var(--mono);color:${c};">${cs.pct}%</td>`;
+    }).join('');
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${r.name}</td>
+      <td style="font-family:var(--mono)">${r.rollNo}</td>
+      <td style="font-family:var(--mono);font-weight:700;">${r.score}/${questions.length||50}</td>
+      <td style="font-family:var(--mono)">${pct}%</td>
+      ${coScoresHtml}
+      <td><span class="badge ${gradeColor}">${grade}</span></td>
+    </tr>`;
+  }).join('');
+  
+  addLog('📊 Results calculated for ' + results.length + ' students');
+}
+
+function filterResultsTable() {
+  const q = document.getElementById('resSearch').value.toLowerCase();
+  document.querySelectorAll('#resultsTableBody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// ================== EXPORT ==================
+function exportAllData() {
+  const wb = XLSX.utils.book_new();
+  const students = Object.values(studentsData).filter(s=>s.submitted);
+  
+  if (students.length === 0) { alert('No data to export.'); return; }
+  
+  // Sheet 1: Individual Marks
+  const marksData = students.map((s,i) => {
+    const coScores = calculateStudentCO(s.answers);
+    const row = { '#': i+1, 'Name': s.name, 'Roll No': s.rollNo, 'Score': s.score, 'Total': questions.length, 'Percentage': Math.round((s.score/questions.length)*100)+'%' };
+    Object.entries(coScores).forEach(([key, cs]) => {
+      row[key + ' (%)'] = cs.pct + '%';
+      row[key + ' Marks'] = cs.obtained + '/' + cs.total;
+    });
+    return row;
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(marksData), 'Individual Marks');
+  
+  // Sheet 2: CO Summary
+  const coKeys = Object.keys(coMapping);
+  const coRows = coKeys.map(key => {
+    const pcts = students.map(s => calculateStudentCO(s.answers)[key]?.pct || 0);
+    return {
+      'CO': key,
+      'Description': coMapping[key].label,
+      'Questions Mapped': coMapping[key].questions.length,
+      'Class Avg (%)': (pcts.reduce((a,b)=>a+b,0)/pcts.length).toFixed(1)+'%',
+      'Above 70%': pcts.filter(p=>p>=70).length,
+      'Below 50%': pcts.filter(p=>p<50).length
+    };
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(coRows), 'CO Analysis');
+  
+  // Sheet 3: Session Info
+  const info = [
+    { Key: 'Session Name', Value: setupConfig.sessionName||'—' },
+    { Key: 'Course Code', Value: setupConfig.courseCode||'—' },
+    { Key: 'Date', Value: new Date().toLocaleDateString() },
+    { Key: 'Total Students', Value: students.length },
+    { Key: 'Questions', Value: questions.length }
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(info), 'Session Info');
+  
+  XLSX.writeFile(wb, `QuizResults_${setupConfig.courseCode||'Quiz'}_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`);
+  addLog('📥 Excel exported');
+}
+
+function exportIndividualMarks() {
+  const wb = XLSX.utils.book_new();
+  const students = Object.values(studentsData).filter(s=>s.submitted);
+  const data = students.map((s,i) => ({
+    '#': i+1, 'Name': s.name, 'Roll No': s.rollNo,
+    'Score': s.score, 'Total': questions.length,
+    '%': Math.round((s.score/questions.length)*100)
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Marks');
+  XLSX.writeFile(wb, 'IndividualMarks.xlsx');
+}
+
+function exportCOData() {
+  const wb = XLSX.utils.book_new();
+  const students = Object.values(studentsData).filter(s=>s.submitted);
+  const coKeys = Object.keys(coMapping);
+  const data = students.map((s,i) => {
+    const coS = calculateStudentCO(s.answers);
+    const row = { '#': i+1, 'Name': s.name, 'Roll No': s.rollNo };
+    coKeys.forEach(k => { row[k] = (coS[k]?.pct||0)+'%'; });
+    return row;
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'CO Data');
+  XLSX.writeFile(wb, 'COAnalysis.xlsx');
+}
+
+// ================== SESSION HISTORY ==================
+function saveCurrentSession() {
+  const students = Object.values(studentsData).filter(s=>s.submitted);
+  const history = JSON.parse(localStorage.getItem('sessionHistory') || '[]');
+  const entry = {
+    id: sessionId,
+    savedAt: Date.now(),
+    sessionName: setupConfig.sessionName || 'Unnamed Session',
+    courseCode: setupConfig.courseCode || '—',
+    totalStudents: students.length,
+    avgScore: students.length > 0 ? (students.reduce((a,b)=>a+b.score,0)/students.length).toFixed(1) : 0,
+    students,
+    coMapping,
+    questions: questions.map(q => ({id:q.id,question:q.question,correct:q.correct}))
+  };
+  const existing = history.findIndex(h => h.id === sessionId);
+  if (existing >= 0) history[existing] = entry;
+  else history.push(entry);
+  localStorage.setItem('sessionHistory', JSON.stringify(history));
+  loadSavedSessions();
+  addLog('💾 Session saved to history');
+  alert('Session saved!');
+}
+
+function loadSavedSessions() {
+  const history = JSON.parse(localStorage.getItem('sessionHistory') || '[]');
+  const container = document.getElementById('sessionHistoryList');
+  if (history.length === 0) {
+    container.innerHTML = '<div style="color:var(--text2);font-size:0.85rem;">No saved sessions yet.</div>';
+    return;
+  }
+  container.innerHTML = history.sort((a,b)=>b.savedAt-a.savedAt).map(h => `
+    <div class="session-item">
+      <div class="session-info">
+        <h4>${h.sessionName} <span style="color:var(--text2);font-weight:400;">(${h.courseCode})</span></h4>
+        <p>${new Date(h.savedAt).toLocaleString()} · ${h.totalStudents} students · Avg: ${h.avgScore}/50</p>
+      </div>
+      <div class="session-actions">
+        <button class="btn btn-primary btn-sm" onclick="downloadSessionExcel('${h.id}')">📥 Excel</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSession('${h.id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteSession(id) {
+  if (!confirm('Delete this session?')) return;
+  let history = JSON.parse(localStorage.getItem('sessionHistory') || '[]');
+  history = history.filter(h => h.id !== id);
+  localStorage.setItem('sessionHistory', JSON.stringify(history));
+  loadSavedSessions();
+}
+
+function downloadSessionExcel(id) {
+  const history = JSON.parse(localStorage.getItem('sessionHistory') || '[]');
+  const session = history.find(h => h.id === id);
+  if (!session) return;
+  const wb = XLSX.utils.book_new();
+  const data = session.students.map((s,i) => ({
+    '#': i+1, 'Name': s.name, 'Roll No': s.rollNo, 'Score': s.score,
+    '%': Math.round((s.score/50)*100)
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Results');
+  XLSX.writeFile(wb, `Session_${session.courseCode}_${new Date(session.savedAt).toLocaleDateString().replace(/\//g,'-')}.xlsx`);
+}
+
+// ================== UTILS ==================
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', t.getAttribute('onclick').includes("'"+tab+"'"));
+  });
+  document.querySelectorAll('.tab-content').forEach(tc => {
+    tc.classList.toggle('active', tc.id === 'tab-' + tab);
+  });
+  if (tab === 'live') updateLiveMonitor();
+  if (tab === 'history') loadSavedSessions();
+  if (tab === 'comap') renderCOTable();
+}
+
+function addLog(msg) {
+  const log = document.getElementById('sessionLog');
+  const time = new Date().toLocaleTimeString();
+  log.innerHTML += `<div><span style="color:var(--accent)">[${time}]</span> ${msg}</div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+let modalCallback = null;
+function showConfirm(title, msg, cb) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalMessage').textContent = msg;
+  document.getElementById('confirmModal').classList.add('open');
+  modalCallback = cb;
+  document.getElementById('modalConfirmBtn').onclick = () => { closeModal(); if(modalCallback) modalCallback(); };
+}
+function closeModal() { document.getElementById('confirmModal').classList.remove('open'); }
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// Init on load
+window.addEventListener('load', () => {
+  document.getElementById('studentUrl').textContent = window.location.origin.replace('/host','') + '/student/index.html';
+});
+</script>
 </body>
 </html>
