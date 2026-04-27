@@ -11,8 +11,8 @@ const APP_CONFIG = {
     storageBucket: "tues-2f354.firebasestorage.app",
     messagingSenderId: "41087849708",
     appId: "1:41087849708:web:25c1f91d54858a2111c1c9",
-    measurementId: "G-S6Z5JJ97CB"
-    databaseURL: https://tues-2f354-default-rtdb.asia-southeast1.firebasedatabase.app
+    measurementId: "G-S6Z5JJ97CB",
+    databaseURL: "https://tues-2f354-default-rtdb.asia-southeast1.firebasedatabase.app"
   
   },
 
