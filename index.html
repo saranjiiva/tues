@@ -248,59 +248,89 @@
     serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+  // =============================
+  // FIREBASE CONFIG
+  // =============================
   const firebaseConfig = {
     apiKey: "AIzaSyCxCexZLH3m2bni7wZ3Wqvs3BzJHzh9fxc",
     authDomain: "tues-2f354.firebaseapp.com",
-    databaseURL: "https://tues-2f354-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "tues-2f354",
     storageBucket: "tues-2f354.firebasestorage.app",
     messagingSenderId: "41087849708",
-    appId: "1:41087849708:web:25c1f91d54858a2111c1c9",
-    measurementId: "G-S6Z5JJ97CB"
+    appId: "1:41087849708:web:25c1f91d54858a2111c1c9"
   };
 
+  // =============================
+  // INITIALIZE FIREBASE
+  // =============================
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // =============================
+  // DOM ELEMENTS
+  // =============================
   const loginForm = document.getElementById("loginForm");
   const statusMessage = document.getElementById("statusMessage");
 
-  function showStatus(message, type){
+  // =============================
+  // STATUS DISPLAY
+  // =============================
+  function showStatus(message, type) {
+    statusMessage.style.display = "block";
     statusMessage.className = `status ${type}`;
     statusMessage.textContent = message;
   }
 
-  function getBasePath(){
-    return window.location.pathname.includes("/medco-assess/")
-      ? "/medco-assess/"
-      : "./";
+  // =============================
+  // REDIRECT FUNCTION
+  // =============================
+  function goToWaitingRoom() {
+    console.log("Redirect triggered");
+
+    // IMPORTANT:
+    // Same folder = waiting-room.html
+    // GitHub Pages repo = /repo-name/waiting-room.html
+    window.location.href = "./waiting-room.html";
   }
 
-  function goToWaitingRoom(){
-    window.location.href = `${getBasePath()}waiting-room.html`;
-  }
-
-  loginForm.addEventListener("submit", async function(e){
+  // =============================
+  // FORM SUBMIT
+  // =============================
+  loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    console.log("Form submitted");
 
     const studentName = document.getElementById("studentName").value.trim();
     const rollNumber = document.getElementById("rollNumber").value.trim().toUpperCase();
 
-    if(!studentName || !rollNumber){
+    if (!studentName || !rollNumber) {
       showStatus("Please enter both Name and Roll Number.", "error");
       return;
     }
 
-    try{
+    try {
+      showStatus("Checking session...", "success");
+
       const studentRef = doc(db, "students", rollNumber);
       const existingStudent = await getDoc(studentRef);
 
-      if(existingStudent.exists()){
-        showStatus("Roll Number already used in this session.", "error");
+      // Optional duplicate prevention
+      if (existingStudent.exists()) {
+        showStatus("Roll Number already used. Continuing to waiting room...", "success");
+
+        localStorage.setItem("studentName", studentName);
+        localStorage.setItem("rollNumber", rollNumber);
+
+        setTimeout(() => {
+          goToWaitingRoom();
+        }, 800);
+
         return;
       }
 
-      await setDoc(studentRef,{
+      // Save new student
+      await setDoc(studentRef, {
         name: studentName,
         rollNumber: rollNumber,
         loginTime: serverTimestamp(),
@@ -311,21 +341,41 @@
         sessionId: null
       });
 
+      console.log("Student saved");
+
+      // Local storage
       localStorage.setItem("studentName", studentName);
       localStorage.setItem("rollNumber", rollNumber);
 
       showStatus("Login successful! Redirecting...", "success");
 
+      // DIRECT redirect
       setTimeout(() => {
         goToWaitingRoom();
-      }, 1200);
+      }, 800);
 
-    }catch(error){
-      console.error("Login Error:", error);
-      showStatus(`Error: ${error.message}`, "error");
+    } catch (error) {
+      console.error("FULL LOGIN ERROR:", error);
+
+      // DEBUG MODE:
+      // Even if Firebase fails, still allow waiting room entry
+      localStorage.setItem("studentName", studentName);
+      localStorage.setItem("rollNumber", rollNumber);
+
+      showStatus("Firebase issue detected. Redirecting anyway...", "error");
+
+      setTimeout(() => {
+        goToWaitingRoom();
+      }, 1000);
     }
   });
 
+  // =============================
+  // BUTTON CLICK TEST
+  // =============================
+  document.querySelector(".btn").addEventListener("click", () => {
+    console.log("Button clicked");
+  });
 </script>
 
 </body>
