@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MedCO Assess — Student Login</title>
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -61,7 +60,6 @@
       display:flex;
       flex-direction:column;
       justify-content:center;
-      background:linear-gradient(145deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
     }
 
     .brand{
@@ -81,20 +79,6 @@
       justify-content:center;
       font-size:24px;
       font-weight:800;
-      color:white;
-      box-shadow:0 10px 20px rgba(37,99,235,0.35);
-    }
-
-    .brand h1{
-      font-size:28px;
-      font-weight:800;
-      letter-spacing:-0.5px;
-    }
-
-    .brand p{
-      color:var(--muted);
-      font-size:14px;
-      margin-top:4px;
     }
 
     .headline{
@@ -112,30 +96,6 @@
       color:var(--muted);
       font-size:17px;
       line-height:1.8;
-      margin-bottom:40px;
-      max-width:520px;
-    }
-
-    .features{
-      display:grid;
-      grid-template-columns:repeat(2,1fr);
-      gap:16px;
-    }
-
-    .feature{
-      background:rgba(255,255,255,0.04);
-      border:1px solid var(--border);
-      padding:16px;
-      border-radius:16px;
-      font-size:14px;
-      color:var(--muted);
-    }
-
-    .feature strong{
-      display:block;
-      color:white;
-      margin-bottom:6px;
-      font-size:15px;
     }
 
     .right-panel{
@@ -155,7 +115,6 @@
     .login-card p{
       color:var(--muted);
       margin-bottom:30px;
-      line-height:1.6;
     }
 
     .form-group{
@@ -167,7 +126,6 @@
       margin-bottom:8px;
       font-size:14px;
       font-weight:600;
-      color:#cbd5e1;
     }
 
     .form-group input{
@@ -179,16 +137,6 @@
       color:white;
       font-size:16px;
       outline:none;
-      transition:0.25s;
-    }
-
-    .form-group input:focus{
-      border-color:rgba(96,165,250,0.7);
-      box-shadow:0 0 0 4px rgba(37,99,235,0.15);
-    }
-
-    .form-group input::placeholder{
-      color:#64748b;
     }
 
     .btn{
@@ -201,12 +149,6 @@
       font-size:17px;
       font-weight:700;
       cursor:pointer;
-      transition:0.25s;
-      box-shadow:0 12px 20px rgba(37,99,235,0.28);
-    }
-
-    .btn:hover{
-      transform:translateY(-2px);
     }
 
     .status{
@@ -218,30 +160,15 @@
     }
 
     .status.error{
-      background:rgba(239,68,68,0.12);
-      border:1px solid rgba(239,68,68,0.25);
-      color:#fecaca;
       display:block;
+      background:rgba(239,68,68,0.12);
+      color:#fecaca;
     }
 
     .status.success{
-      background:rgba(34,197,94,0.12);
-      border:1px solid rgba(34,197,94,0.25);
-      color:#bbf7d0;
       display:block;
-    }
-
-    .footer-note{
-      margin-top:25px;
-      text-align:center;
-      font-size:13px;
-      color:var(--muted);
-      line-height:1.7;
-    }
-
-    .footer-note a{
-      color:#60a5fa;
-      text-decoration:none;
+      background:rgba(34,197,94,0.12);
+      color:#bbf7d0;
     }
 
     @media(max-width:950px){
@@ -261,181 +188,145 @@
 </head>
 <body>
 
-  <div class="container">
+<div class="container">
 
-    <!-- LEFT PANEL -->
-    <div class="left-panel">
-      <div class="brand">
-        <div class="logo">MCQ</div>
-        <div>
-          <h1>MedCO Assess</h1>
-          <p>Course Outcome Based Smart Assessment Platform</p>
-        </div>
-      </div>
-
-      <div class="headline">
-        Smart MCQ Testing for <span>Students & Course Outcome Analytics</span>
-      </div>
-
-      <div class="description">
-        Join your session securely using only your Name and Roll Number.
-        Wait for your faculty host to dispatch the exam, answer randomized timed questions,
-        and receive detailed explanations with CO-based performance analytics after completion.
-      </div>
-
-      <div class="features">
-        <div class="feature">
-          <strong>50 Timed Questions</strong>
-          Host-controlled timer for each question
-        </div>
-
-        <div class="feature">
-          <strong>Randomized Order</strong>
-          Unique question sequence for every student
-        </div>
-
-        <div class="feature">
-          <strong>CO Mapping</strong>
-          Every question linked to specific course outcome
-        </div>
-
-        <div class="feature">
-          <strong>Detailed Results</strong>
-          Explanations + CO attainment score
-        </div>
+  <!-- LEFT -->
+  <div class="left-panel">
+    <div class="brand">
+      <div class="logo">MCQ</div>
+      <div>
+        <h1>MedCO Assess</h1>
+        <p>Course Outcome Based Smart Assessment Platform</p>
       </div>
     </div>
 
-    <!-- RIGHT PANEL -->
-    <div class="right-panel">
-      <div class="login-card">
-        <h2>Student Login</h2>
-        <p>
-          Enter your details exactly as instructed by your faculty.
-          No password required.
-        </p>
-
-        <form id="loginForm">
-          <div class="form-group">
-            <label for="studentName">Full Name</label>
-            <input
-              type="text"
-              id="studentName"
-              placeholder="Enter your full name"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="rollNumber">Roll Number</label>
-            <input
-              type="text"
-              id="rollNumber"
-              placeholder="Enter your roll number"
-              required
-            />
-          </div>
-
-          <button type="submit" class="btn">
-            Enter Waiting Room
-          </button>
-        </form>
-
-        <div id="statusMessage" class="status"></div>
-
-        <div class="footer-note">
-          By continuing, you agree to participate in the assigned MCQ session.<br>
-          Duplicate roll numbers may be blocked by host.
-        </div>
-      </div>
+    <div class="headline">
+      Smart MCQ Testing for <span>Students & CO Analytics</span>
     </div>
 
+    <div class="description">
+      Login with Name and Roll Number, wait for faculty dispatch,
+      answer randomized questions, and receive CO-based performance.
+    </div>
   </div>
 
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getFirestore,
-      doc,
-      setDoc,
-      getDoc,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <!-- RIGHT -->
+  <div class="right-panel">
+    <div class="login-card">
+      <h2>Student Login</h2>
+      <p>Enter your details exactly as instructed.</p>
 
-    // =============================
-    // PASTE YOUR FIREBASE CONFIG
-    // =============================
-    const firebaseConfig = {
-      apiKey: "AIzaSyCxCexZLH3m2bni7wZ3Wqvs3BzJHzh9fxc",
-  authDomain: "tues-2f354.firebaseapp.com",
-  databaseURL: "https://tues-2f354-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "tues-2f354",
-  storageBucket: "tues-2f354.firebasestorage.app",
-  messagingSenderId: "41087849708",
-  appId: "1:41087849708:web:25c1f91d54858a2111c1c9",
-  measurementId: "G-S6Z5JJ97CB"
-    };
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="studentName">Full Name</label>
+          <input type="text" id="studentName" placeholder="Enter your full name" required>
+        </div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+        <div class="form-group">
+          <label for="rollNumber">Roll Number</label>
+          <input type="text" id="rollNumber" placeholder="Enter your roll number" required>
+        </div>
 
-    const loginForm = document.getElementById("loginForm");
-    const statusMessage = document.getElementById("statusMessage");
+        <button type="submit" class="btn">
+          Enter Waiting Room
+        </button>
+      </form>
 
-    function showStatus(message, type){
-      statusMessage.className = `status ${type}`;
-      statusMessage.textContent = message;
+      <div id="statusMessage" class="status"></div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCxCexZLH3m2bni7wZ3Wqvs3BzJHzh9fxc",
+    authDomain: "tues-2f354.firebaseapp.com",
+    databaseURL: "https://tues-2f354-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tues-2f354",
+    storageBucket: "tues-2f354.firebasestorage.app",
+    messagingSenderId: "41087849708",
+    appId: "1:41087849708:web:25c1f91d54858a2111c1c9",
+    measurementId: "G-S6Z5JJ97CB"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const loginForm = document.getElementById("loginForm");
+  const statusMessage = document.getElementById("statusMessage");
+
+  function showStatus(message, type){
+    statusMessage.className = `status ${type}`;
+    statusMessage.textContent = message;
+  }
+
+  function getBasePath(){
+    return window.location.pathname.includes("/medco-assess/")
+      ? "/medco-assess/"
+      : "./";
+  }
+
+  function goToWaitingRoom(){
+    window.location.href = `${getBasePath()}waiting-room.html`;
+  }
+
+  loginForm.addEventListener("submit", async function(e){
+    e.preventDefault();
+
+    const studentName = document.getElementById("studentName").value.trim();
+    const rollNumber = document.getElementById("rollNumber").value.trim().toUpperCase();
+
+    if(!studentName || !rollNumber){
+      showStatus("Please enter both Name and Roll Number.", "error");
+      return;
     }
 
-    loginForm.addEventListener("submit", async (e)=>{
-      e.preventDefault();
+    try{
+      const studentRef = doc(db, "students", rollNumber);
+      const existingStudent = await getDoc(studentRef);
 
-      const studentName = document.getElementById("studentName").value.trim();
-      const rollNumber = document.getElementById("rollNumber").value.trim().toUpperCase();
-
-      if(!studentName || !rollNumber){
-        showStatus("Please enter both Name and Roll Number.", "error");
+      if(existingStudent.exists()){
+        showStatus("Roll Number already used in this session.", "error");
         return;
       }
 
-      try{
-        // Prevent duplicate login
-        const studentRef = doc(db, "students", rollNumber);
-        const existingStudent = await getDoc(studentRef);
+      await setDoc(studentRef,{
+        name: studentName,
+        rollNumber: rollNumber,
+        loginTime: serverTimestamp(),
+        status: "waiting",
+        currentQuestion: 0,
+        score: 0,
+        totalQuestions: 50,
+        sessionId: null
+      });
 
-        if(existingStudent.exists()){
-          showStatus("This Roll Number is already registered for current session.", "error");
-          return;
-        }
+      localStorage.setItem("studentName", studentName);
+      localStorage.setItem("rollNumber", rollNumber);
 
-        // Save student
-        await setDoc(studentRef,{
-          name: studentName,
-          rollNumber: rollNumber,
-          loginTime: serverTimestamp(),
-          status: "waiting",
-          currentQuestion: 0,
-          score: 0,
-          sessionId: null
-        });
+      showStatus("Login successful! Redirecting...", "success");
 
-        // Save to local storage
-        localStorage.setItem("studentName", studentName);
-        localStorage.setItem("rollNumber", rollNumber);
+      setTimeout(() => {
+        goToWaitingRoom();
+      }, 1200);
 
-        showStatus("Login successful! Redirecting to waiting room...", "success");
+    }catch(error){
+      console.error("Login Error:", error);
+      showStatus(`Error: ${error.message}`, "error");
+    }
+  });
 
-        setTimeout(()=>{
-          window.location.href = "waiting-room.html";
-        },1200);
-
-      }catch(error){
-        console.error(error);
-        showStatus("Error logging in. Please try again.", "error");
-      }
-    });
-  </script>
+</script>
 
 </body>
 </html>
